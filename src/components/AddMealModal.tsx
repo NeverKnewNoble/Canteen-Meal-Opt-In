@@ -55,10 +55,10 @@ export default function AddMealModal({ isOpen, onClose, onAddMeal }: AddMealModa
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Add New Meal</h2>
+          <h2 className="text-xl font-bold text-main-text">Add New Meal</h2>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-muted-text hover:text-main-text transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -68,7 +68,7 @@ export default function AddMealModal({ isOpen, onClose, onAddMeal }: AddMealModa
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Food Item Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-main-text mb-2">
               Food Item Description
             </label>
             <textarea
@@ -76,14 +76,14 @@ export default function AddMealModal({ isOpen, onClose, onAddMeal }: AddMealModa
               onChange={(e) => setFoodItemDescription(e.target.value)}
               placeholder="Enter detailed description of the meal..."
               rows={2}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black resize-none"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-primary focus:border-primary text-main-text resize-none"
               required
             />
           </div>
 
           {/* Menu Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-main-text mb-2">
               <Calendar className="w-4 h-4 inline mr-1" />
               Menu Date
             </label>
@@ -91,14 +91,14 @@ export default function AddMealModal({ isOpen, onClose, onAddMeal }: AddMealModa
               type="date"
               value={menuDate}
               onChange={(e) => setMenuDate(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-primary focus:border-primary text-main-text"
               required
             />
           </div>
 
           {/* Submission Deadline Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-main-text mb-2">
               <Calendar className="w-4 h-4 inline mr-1" />
               Submission Deadline Date
             </label>
@@ -106,14 +106,14 @@ export default function AddMealModal({ isOpen, onClose, onAddMeal }: AddMealModa
               type="date"
               value={submissionDeadlineDate}
               onChange={(e) => setSubmissionDeadlineDate(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-primary focus:border-primary text-main-text"
               required
             />
           </div>
 
           {/* Submission Deadline Time */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-main-text mb-2">
               <Clock className="w-4 h-4 inline mr-1" />
               Submission Deadline Time
             </label>
@@ -121,7 +121,7 @@ export default function AddMealModal({ isOpen, onClose, onAddMeal }: AddMealModa
               type="time"
               value={submissionDeadlineTime}
               onChange={(e) => setSubmissionDeadlineTime(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-primary focus:border-primary text-main-text"
               required
             />
           </div>
@@ -131,13 +131,13 @@ export default function AddMealModal({ isOpen, onClose, onAddMeal }: AddMealModa
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 text-main-text bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-medium"
             >
               Publish Menu
             </button>

@@ -4,9 +4,14 @@ export interface Meal {
   id: string;
   name: string;
   description: string;
-  time: string;
-  spots: number;
-  totalSpots: number;
+  menu_id: string;
+  created_at?: string;
+}
+
+export interface MealFormData {
+  name: string;
+  description: string;
+  menu_id: string;
 }
 
 export interface AdminMeal {

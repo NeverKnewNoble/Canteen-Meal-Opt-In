@@ -1,117 +1,235 @@
 'use client';
 
-import { Clock, CheckCircle, User as UserIcon, CalendarDays, ChevronLeft, UtensilsCrossed } from 'lucide-react';
+import { Clock, Check, X, CalendarDays, Sparkles, ChevronDown, HandPlatter, Send } from 'lucide-react';
 import { useState } from 'react';
-import { sampleMeals, sampleUserSelections } from '@/utils/sampleData';
-import type { Meal, UserSelectionData } from '@/types';
+import { sampleMeals } from '@/utils/sampleData';
+import type { User } from '@/types';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
+// Types matching select_menu page
+type MealSelection = {
+  mealId: string;
+  optIn: boolean;
+};
+
+type UserMealSelections = {
+  user: User;
+  meals: MealSelection[];
+};
+
 export default function ReviewSubmit() {
   const [isSubmitted, setIsSubmitted] = useState(false);
-  
-  // Sample data for the review
-  const selectedMeal: Meal = { ...sampleMeals[0], name: "Rice with Chicken Curry" };
-  const userSelections: UserSelectionData[] = sampleUserSelections;
+
+  // Sample data matching select_menu structure
+  const meals = sampleMeals;
+  const userSelections: UserMealSelections[] = [
+    {
+      user: { id: '1', name: 'Lisa Anderson', department: 'Marketing' },
+      meals: [
+        { mealId: 'vegetarian', optIn: true },
+        { mealId: 'chicken', optIn: true },
+        { mealId: 'salad', optIn: false },
+        { mealId: 'fish', optIn: true },
+        { mealId: 'sandwich', optIn: false },
+      ]
+    },
+    {
+      user: { id: '2', name: 'John Smith', department: 'Engineering' },
+      meals: [
+        { mealId: 'vegetarian', optIn: false },
+        { mealId: 'chicken', optIn: true },
+        { mealId: 'salad', optIn: true },
+        { mealId: 'fish', optIn: false },
+        { mealId: 'sandwich', optIn: true },
+      ]
+    },
+  ];
+
+  // Track expanded users
+  const [expandedUsers, setExpandedUsers] = useState<string[]>(
+    userSelections.map(u => u.user.id)
+  );
+
+  const toggleUserExpanded = (userId: string) => {
+    setExpandedUsers(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const getMealName = (mealId: string) => {
+    return meals.find(m => m.id === mealId)?.name || mealId;
+  };
+
+  const getYesCount = (userMeals: MealSelection[]) => {
+    return userMeals.filter(m => m.optIn).length;
+  };
 
   const handleSubmit = () => {
     setIsSubmitted(true);
-    // Navigate to success page after a short delay
     setTimeout(() => {
       window.location.href = '/success_submit';
     }, 1500);
   };
 
+  // Calculate totals
+  const totalYes = userSelections.reduce((acc, u) => acc + getYesCount(u.meals), 0);
+  const totalSelections = userSelections.length * meals.length;
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar title="Review & Submit" step="Step 3 of 3" backHref="/select_names/select_menu" />
-      
-      <main className="flex justify-center items-center px-4 py-8">
-        <div className="max-w-2xl w-full">
 
-        {/* Deadline Alert */}
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-8">
-          <div className="flex items-center">
-            <Clock className="w-5 h-5 text-orange-600 mr-3" />
-            <div>
-              <p className="font-medium text-orange-900">Submission deadline</p>
-              <p className="text-sm text-orange-700">2026-01-12 16:00</p>
+      <main className="flex justify-center px-4 py-8">
+        <div className="max-w-2xl w-full space-y-6">
+
+        {/* Header Card */}
+        <div className="bg-primary rounded-2xl p-5 text-center">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Sparkles className="w-4 h-4 text-red-200" />
+            <span className="text-red-200 text-xs font-medium uppercase tracking-wider">Review Selections</span>
+            <Sparkles className="w-4 h-4 text-red-200" />
+          </div>
+          <h1 className="text-xl font-bold text-white mb-3">Confirm Your Choices</h1>
+          <div className="flex items-center justify-center gap-4 text-sm text-red-100">
+            <div className="flex items-center gap-1.5">
+              <CalendarDays className="w-4 h-4" />
+              <span>Tuesday, Jan 13</span>
+            </div>
+            <div className="w-px h-4 bg-red-300/50" />
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-4 h-4" />
+              <span>Closes 4:00 PM</span>
             </div>
           </div>
         </div>
 
-        {/* Selection Summary */}
-        <div className="border border-gray-200 rounded-lg p-6 mb-8">
-          <h2 className="font-semibold text-lg text-black mb-4">Summary of selections</h2>
-          
-          {/* Meal Info */}
-          <div className="flex items-center mb-6 pb-6 border-b">
-            <div className="bg-orange-100 p-3 rounded-lg mr-4">
-              <UtensilsCrossed className="w-8 h-8 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Tomorrow's Menu</p>
-              <h3 className="font-semibold text-xl text-black">{selectedMeal.name}</h3>
-              <div className="flex items-center mt-2 text-sm text-gray-500">
-                <CalendarDays className="w-4 h-4 mr-1" />
-                Tuesday, January 13
-              </div>
-            </div>
+        {/* Summary Stats */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-gray-50 rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold text-primary">{userSelections.length}</p>
+            <p className="text-sm text-muted-text">People</p>
           </div>
-          
-          {/* User Selections */}
-          <div className="space-y-4">
-            {userSelections.map((selection) => (
-              <div key={selection.user.id} className="flex items-center justify-between py-3">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-gray-200 rounded-full mr-3 flex items-center justify-center">
-                    <span className="text-sm font-medium text-gray-600">{selection.user.name.charAt(0)}</span>
-                  </div>
-                  <div>
-                    <p className="font-medium text-black">{selection.user.name}</p>
-                    <p className="text-sm text-gray-500">{selection.user.department}</p>
-                  </div>
-                </div>
-                <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                  selection.optIn 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-gray-100 text-gray-600'
-                }`}>
-                  {selection.optIn ? (
-                    <>
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      Yes
-                    </>
-                  ) : (
-                    'No'
-                  )}
-                </div>
-              </div>
-            ))}
+          <div className="bg-success/10 rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold text-success">{totalYes}</p>
+            <p className="text-sm text-muted-text">Meals Opted In</p>
           </div>
         </div>
+
+        {/* User Selection Cards */}
+        {userSelections.map((userSel) => {
+          const isExpanded = expandedUsers.includes(userSel.user.id);
+          const yesCount = getYesCount(userSel.meals);
+
+          return (
+            <div key={userSel.user.id} className="border border-gray-200 rounded-2xl overflow-hidden">
+              {/* User Header */}
+              <button
+                onClick={() => toggleUserExpanded(userSel.user.id)}
+                className="w-full bg-gray-50 px-4 py-3 flex items-center justify-between border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-sm font-semibold text-primary">
+                      {userSel.user.name.split(' ').map(n => n[0]).join('')}
+                    </span>
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-main-text">{userSel.user.name}</p>
+                    <p className="text-sm text-muted-text">{userSel.user.department}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-success/10 text-success">
+                      <Check className="w-3 h-3 mr-1" />
+                      {yesCount}
+                    </span>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-muted-text">
+                      <X className="w-3 h-3 mr-1" />
+                      {meals.length - yesCount}
+                    </span>
+                  </div>
+                  <ChevronDown
+                    className={`w-5 h-5 text-muted-text transition-transform duration-200 ${
+                      isExpanded ? 'rotate-180' : ''
+                    }`}
+                  />
+                </div>
+              </button>
+
+              {/* Meals List */}
+              <div
+                className={`divide-y divide-gray-100 transition-all duration-200 overflow-hidden ${
+                  isExpanded ? 'max-h-250 opacity-100' : 'max-h-0 opacity-0'
+                }`}
+              >
+                {userSel.meals.map((mealSel) => (
+                  <div key={mealSel.mealId} className="px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
+                        <HandPlatter className="w-4 h-4 text-primary" />
+                      </div>
+                      <span className="font-medium text-main-text">{getMealName(mealSel.mealId)}</span>
+                    </div>
+                    <span
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                        mealSel.optIn
+                          ? 'bg-success text-white'
+                          : 'bg-gray-200 text-muted-text'
+                      }`}
+                    >
+                      {mealSel.optIn ? (
+                        <>
+                          <Check className="w-4 h-4 mr-1" />
+                          Yes
+                        </>
+                      ) : (
+                        <>
+                          <X className="w-4 h-4 mr-1" />
+                          No
+                        </>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
 
         {/* Submit Button */}
-        <button 
-          onClick={handleSubmit}
-          disabled={isSubmitted}
-          className={`w-full rounded-lg h-12 flex items-center justify-center font-medium transition-colors ${
-            !isSubmitted 
-              ? 'bg-black hover:bg-gray-900 text-white cursor-pointer' 
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-          }`}
-        >
-          {isSubmitted ? 'Submitting...' : 'Submit Selections'}
-        </button>
+        <div>
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitted}
+            className={`w-full rounded-xl h-12 flex items-center justify-center font-medium transition-all cursor-pointer ${
+              !isSubmitted
+                ? 'bg-primary hover:bg-primary-hover text-white shadow-lg shadow-primary/25'
+                : 'bg-gray-200 text-muted-text cursor-not-allowed'
+            }`}
+          >
+            {isSubmitted ? (
+              'Submitting...'
+            ) : (
+              <>
+                <Send className="w-4 h-4 mr-2" />
+                Submit Selections
+              </>
+            )}
+          </button>
 
-        {/* Edit Selections Link */}
-        {!isSubmitted && (
-          <div className="text-center mt-4">
-            <Link href="/select_names/select_menu" className="text-gray-600 hover:text-black text-sm underline">
-              Edit selections
-            </Link>
-          </div>
-        )}
+          {!isSubmitted && (
+            <div className="text-center mt-4">
+              <Link href="/select_names/select_menu" className="text-primary hover:text-primary-hover text-sm font-medium">
+                ← Edit selections
+              </Link>
+            </div>
+          )}
+        </div>
+
         </div>
       </main>
     </div>
