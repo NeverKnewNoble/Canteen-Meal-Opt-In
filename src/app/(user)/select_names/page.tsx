@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, UserPlus, ArrowRight, CircleUser } from 'lucide-react';
+import { Search, UserPlus, ArrowRight, X, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { sampleUsers } from '@/utils/sampleData';
 import type { User } from '@/types';
@@ -17,86 +17,98 @@ export default function SelectNames() {
     user.department.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const isSelected = (userId: string) => selectedNames.some(s => s.id === userId);
+
   return (
     <div className="min-h-screen bg-white">
-      <Navbar title="Select Names" step="Step 1 of 3" backHref="/" />
-      
-      <main className="flex justify-center items-center px-4 py-8">
-        <div className="max-w-2xl w-full">
+      <Navbar title="Select Names" step="Step 1 of 3" backHref="/tomorrows_menu" />
+
+      <main className="flex justify-center px-4 py-8">
+        <div className="max-w-2xl w-full space-y-8">
 
         {/* Search Section */}
-        <div className="mb-8">
+        <div>
+          <label className="block text-sm font-medium text-main-text mb-2">
+            Search for name
+          </label>
           <div className="relative">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Search for name
-            </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by name or department..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black text-black"
-              />
-            </div>
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-text" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name or department..."
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-main-text"
+            />
           </div>
 
           {/* Suggested Results */}
           {searchQuery.length >= 2 && filteredUsers.length > 0 && (
-            <div className="mt-4">
+            <div className="mt-3 border border-gray-200 rounded-lg shadow-sm divide-y divide-gray-100 overflow-hidden">
               {filteredUsers.slice(0, 5).map((user) => (
                 <div
                   key={user.id}
                   onClick={() => {
-                    if (!selectedNames.find(selected => selected.id === user.id)) {
+                    if (!isSelected(user.id)) {
                       setSelectedNames([...selectedNames, user]);
                     }
                   }}
-                  className="bg-white border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors mb-2"
+                  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
+                    isSelected(user.id)
+                      ? 'bg-primary/5'
+                      : 'hover:bg-gray-50'
+                  }`}
                 >
-                  <div className="flex items-center">
-                    <div className='mr-3'>
-                      <CircleUser className='w-10 h-10 text-black'/>  
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-sm font-semibold text-primary">
+                        {user.name.split(' ').map(n => n[0]).join('')}
+                      </span>
                     </div>
                     <div>
-                      <h3 className="font-medium text-black">{user.name}</h3>
-                      <p className="text-sm text-gray-500">{user.department}</p>
+                      <p className="font-medium text-main-text">{user.name}</p>
+                      <p className="text-sm text-muted-text">{user.department}</p>
                     </div>
                   </div>
+                  {!isSelected(user.id) && (
+                    <Plus className="w-5 h-5 text-muted-text" />
+                  )}
                 </div>
               ))}
-              <p className="text-xs text-gray-400 mt-2">Autocomplete triggers after 2 characters</p>
             </div>
           )}
         </div>
 
         {/* Selected Names Section */}
-        <div className="mb-8">
-          <h2 className="font-medium text-black mb-4">
+        <div>
+          <h2 className="font-medium text-main-text mb-4">
             Selected Names ({selectedNames.length})
           </h2>
-          
+
           {selectedNames.length === 0 ? (
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-              <UserPlus className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 font-medium mb-1">No names selected yet</p>
-              <p className="text-sm text-gray-400">Search and select at least one name to continue</p>
+              <UserPlus className="w-12 h-12 text-muted-text mx-auto mb-4" />
+              <p className="text-muted-text font-medium mb-1">No names selected yet</p>
+              <p className="text-sm text-muted-text">Search and select at least one name to continue</p>
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
               {selectedNames.map((user) => (
-                <div key={user.id} className="inline-flex items-center bg-gray-100 border border-gray-200 rounded-full px-3 py-2">
-                  <CircleUser className='w-5 h-5 text-black mr-2'/>  
-                  <div className='flex-1'>
-                    <span className="text-black font-medium text-sm">{user.name}</span>
-                    <p className="text-xs text-gray-500">{user.department}</p>
+                <div
+                  key={user.id}
+                  className="inline-flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-full px-3 py-2"
+                >
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-xs font-semibold text-primary">
+                      {user.name.split(' ').map(n => n[0]).join('')}
+                    </span>
                   </div>
-                  <button 
-                    onClick={() => setSelectedNames(selectedNames.filter(selected => selected.id !== user.id))}
-                    className="ml-2 text-red-500 hover:text-red-700 text-sm font-medium"
+                  <span className="text-sm font-medium text-main-text">{user.name}</span>
+                  <button
+                    onClick={() => setSelectedNames(selectedNames.filter(s => s.id !== user.id))}
+                    className="w-5 h-5 rounded-full bg-gray-200 hover:bg-red-100 flex items-center justify-center transition-colors group"
                   >
-                    ×
+                    <X className="w-3 h-3 text-muted-text group-hover:text-red-500" />
                   </button>
                 </div>
               ))}
@@ -105,13 +117,13 @@ export default function SelectNames() {
         </div>
 
         {/* Next Button */}
-        <Link href="/select_names/select_menu">
-          <button 
+        <Link href="/select_names/select_menu" className="block">
+          <button
             disabled={selectedNames.length === 0}
-            className={`w-full rounded-lg h-12 flex cursor-pointer items-center justify-center font-medium transition-colors ${
-              selectedNames.length > 0 
-                ? 'bg-black hover:bg-gray-900 text-white cursor-pointer' 
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            className={`w-full rounded-lg cursor-pointer h-12 flex items-center justify-center font-medium transition-colors ${
+              selectedNames.length > 0
+                ? 'bg-primary hover:bg-primary-hover text-white'
+                : 'bg-gray-200 text-muted-text cursor-not-allowed'
             }`}
           >
             Next: Select Menu

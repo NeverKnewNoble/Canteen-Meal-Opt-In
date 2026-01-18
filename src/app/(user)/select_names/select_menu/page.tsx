@@ -1,134 +1,283 @@
 'use client';
 
-import { CalendarDays, Clock, Users, ChevronLeft, UtensilsCrossed } from 'lucide-react';
+import { CalendarDays, Clock, Check, X, ArrowRight, HandPlatter, Sparkles, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
-import { sampleMeals, sampleUserSelections } from '@/utils/sampleData';
-import type { Meal, User, UserSelection } from '@/types';
+import { sampleMeals } from '@/utils/sampleData';
+import type { Meal, User } from '@/types';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import { 
-  updateUserSelection, 
-  initializeUserSelections, 
-  areAllSelectionsComplete, 
-  getTomorrowMeal 
-} from '@/utils/selectMenuUtils';
+
+// Type for tracking meal selections per user
+type MealSelection = {
+  mealId: string;
+  optIn: boolean | null;
+};
+
+type UserMealSelections = {
+  userId: string;
+  meals: MealSelection[];
+};
 
 export default function SelectMenu() {
   // Get selected users from localStorage or use sample data
   const [selectedUsers] = useState<User[]>([
     { id: '1', name: 'Lisa Anderson', department: 'Marketing' },
+    { id: '2', name: 'John Smith', department: 'Engineering' },
   ]);
-  
-  const [userSelections, setUserSelections] = useState<UserSelection[]>(
-    initializeUserSelections(selectedUsers)
-  );
-  
-  // Get tomorrow's meal
-  const tomorrowMeal: Meal = getTomorrowMeal(sampleMeals);
 
-  const handleUpdateUserSelection = (userId: string, optIn: boolean | null) => {
-    setUserSelections(prev => updateUserSelection(prev, userId, optIn));
+  // Track which user cards are expanded
+  const [expandedUsers, setExpandedUsers] = useState<string[]>(
+    selectedUsers.map(u => u.id) // All expanded by default
+  );
+
+  const toggleUserExpanded = (userId: string) => {
+    setExpandedUsers(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
   };
 
-  const allSelectionsComplete = areAllSelectionsComplete(userSelections);
+  // Get available meals
+  const meals = sampleMeals;
+
+  // Initialize selections: each user has selections for each meal
+  const [userSelections, setUserSelections] = useState<UserMealSelections[]>(
+    selectedUsers.map(user => ({
+      userId: user.id,
+      meals: meals.map(meal => ({ mealId: meal.id, optIn: null }))
+    }))
+  );
+
+  const handleMealSelection = (userId: string, mealId: string, optIn: boolean) => {
+    setUserSelections(prev =>
+      prev.map(userSel => {
+        if (userSel.userId !== userId) return userSel;
+        
+        // If selecting YES to a meal, clear all other selections for this user
+        if (optIn === true) {
+          return {
+            ...userSel,
+            meals: userSel.meals.map(mealSel =>
+              mealSel.mealId === mealId 
+                ? { ...mealSel, optIn: true }
+                : { ...mealSel, optIn: false }
+            )
+          };
+        }
+        
+        // If selecting NO or skipping, just update this meal
+        return {
+          ...userSel,
+          meals: userSel.meals.map(mealSel =>
+            mealSel.mealId === mealId ? { ...mealSel, optIn } : mealSel
+          )
+        };
+      })
+    );
+  };
+
+  const handleSkipMeal = (userId: string) => {
+    setUserSelections(prev =>
+      prev.map(userSel => {
+        if (userSel.userId !== userId) return userSel;
+        return {
+          ...userSel,
+          meals: userSel.meals.map(mealSel => ({ ...mealSel, optIn: false }))
+        };
+      })
+    );
+  };
+
+  const getMealSelection = (userId: string, mealId: string): boolean | null => {
+    const userSel = userSelections.find(u => u.userId === userId);
+    const mealSel = userSel?.meals.find(m => m.mealId === mealId);
+    return mealSel?.optIn ?? null;
+  };
+
+  // Check if user has already selected a meal (optIn === true)
+  const hasUserSelectedMeal = (userId: string) => {
+    const userSel = userSelections.find(u => u.userId === userId);
+    return userSel?.meals.some(m => m.optIn === true) ?? false;
+  };
+
+  // Check if all selections are complete (every user has either selected one meal or skipped all)
+  const allSelectionsComplete = userSelections.every(userSel =>
+    userSel.meals.every(mealSel => mealSel.optIn !== null)
+  );
+
+  // Count selected meals per user (should be max 1)
+  const getSelectedCount = (userId: string) => {
+    const userSel = userSelections.find(u => u.userId === userId);
+    return userSel?.meals.filter(m => m.optIn === true).length ?? 0;
+  };
 
   return (
     <div className="min-h-screen bg-white">
       <Navbar title="Select Menu" step="Step 2 of 3" backHref="/select_names" />
-      
-      <main className="flex justify-center items-center px-4 py-8">
-        <div className="max-w-2xl w-full">
 
-        {/* Tomorrow's Menu Card */}
-        <div className="border border-gray-200 rounded-lg p-6 mb-8 bg-white shadow-sm">
-          <div className="flex items-center mb-4">
-            <div className="bg-orange-100 p-3 rounded-lg mr-4">
-              <UtensilsCrossed className="w-8 h-8 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Tomorrow's Menu</p>
-              <h3 className="font-semibold text-xl text-black">{tomorrowMeal.name}</h3>
-            </div>
+      <main className="flex justify-center px-4 py-8">
+        <div className="max-w-2xl w-full space-y-6">
+
+        {/* Header Card */}
+        <div className="bg-primary rounded-2xl p-5 text-center">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Sparkles className="w-4 h-4 text-red-200" />
+            <span className="text-red-200 text-xs font-medium uppercase tracking-wider">Tomorrow's Menu</span>
+            <Sparkles className="w-4 h-4 text-red-200" />
           </div>
-          
-          <div className="flex items-center space-x-6 text-sm text-gray-600 mb-4">
-            <div className="flex items-center">
-              <CalendarDays className="w-4 h-4 mr-2" />
-              Tuesday, January 13
+          <h1 className="text-xl font-bold text-white mb-3">Select Your Meals</h1>
+          <div className="flex items-center justify-center gap-4 text-sm text-red-100">
+            <div className="flex items-center gap-1.5">
+              <CalendarDays className="w-4 h-4" />
+              <span>Tuesday, Jan 13</span>
             </div>
-            <div className="flex items-center">
-              <Clock className="w-4 h-4 mr-2" />
-              Deadline: 2026-01-12 16:00
+            <div className="w-px h-4 bg-red-300/50" />
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-4 h-4" />
+              <span>Closes 4:00 PM</span>
             </div>
           </div>
         </div>
 
         {/* User Selections */}
-        <div className="mb-8">
-          <p className="text-sm text-gray-600 mb-4">Make selections for {selectedUsers.length} person{selectedUsers.length > 1 ? 's' : ''}</p>
-          
-          {selectedUsers.map((user, index) => {
-            const userSelection = userSelections.find(s => s.userId === user.id);
-            
-            return (
-              <div key={user.id} className="mb-6">
-                <div className="flex items-center mb-3">
-                  <div className="w-8 h-8 bg-gray-200 rounded-full mr-3 flex items-center justify-center">
-                    <span className="text-sm font-medium text-gray-600">{user.name.charAt(0)}</span>
+        {selectedUsers.map((user) => {
+          const isExpanded = expandedUsers.includes(user.id);
+          const hasSelectedMeal = hasUserSelectedMeal(user.id);
+          const userComplete = userSelections.find(u => u.userId === user.id)?.meals.every(m => m.optIn !== null);
+
+          return (
+            <div key={user.id} className="border border-gray-200 rounded-2xl overflow-hidden">
+              {/* User Header - Clickable */}
+              <button
+                onClick={() => toggleUserExpanded(user.id)}
+                className="w-full bg-gray-50 px-4 py-3 flex items-center justify-between border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-sm font-semibold text-primary">
+                      {user.name.split(' ').map(n => n[0]).join('')}
+                    </span>
                   </div>
-                  <div>
-                    <p className="font-medium text-black">{user.name}</p>
-                    <p className="text-sm text-gray-500">{user.department}</p>
+                  <div className="text-left">
+                    <p className="font-medium text-main-text">{user.name}</p>
+                    <p className="text-sm text-muted-text">{user.department}</p>
                   </div>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4 ml-11">
-                  <button
-                    onClick={() => handleUpdateUserSelection(user.id, true)}
-                    className={`border-2 rounded-lg p-4 text-center transition-all ${
-                      userSelection?.optIn === true
-                        ? 'border-black bg-black text-white'
-                        : 'border-gray-200 bg-white text-black hover:border-gray-300'
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="text-xs text-muted-text">Selected</p>
+                    <p className={`text-lg font-semibold ${userComplete ? 'text-success' : 'text-primary'}`}>
+                      {getSelectedCount(user.id)}/1
+                    </p>
+                  </div>
+                  <ChevronDown
+                    className={`w-5 h-5 text-muted-text transition-transform duration-200 ${
+                      isExpanded ? 'rotate-180' : ''
                     }`}
-                  >
-                    <div className="text-lg font-semibold mb-1">Yes</div>
-                    <div className="text-sm opacity-80">Opt-in for meal</div>
-                  </button>
-                  
-                  <button
-                    onClick={() => handleUpdateUserSelection(user.id, false)}
-                    className={`border-2 rounded-lg p-4 text-center transition-all ${
-                      userSelection?.optIn === false
-                        ? 'border-black bg-black text-white'
-                        : 'border-gray-200 bg-white text-black hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="text-lg font-semibold mb-1">No</div>
-                    <div className="text-sm opacity-80">Skip this meal</div>
-                  </button>
+                  />
                 </div>
+              </button>
+
+              {/* Meals List - Collapsible */}
+              <div
+                className={`divide-y divide-gray-100 transition-all duration-200 overflow-hidden ${
+                  isExpanded ? 'max-h-250 opacity-100' : 'max-h-0 opacity-0'
+                }`}
+              >
+                {meals.map((meal) => {
+                  const selection = getMealSelection(user.id, meal.id);
+                  const isYes = selection === true;
+                  const isNo = selection === false;
+                  const hideButtons = hasSelectedMeal && !isYes;
+
+                  return (
+                    <div key={meal.id} className="px-4 py-4">
+                      <div className="flex items-start gap-3">
+                        {/* Meal Icon */}
+                        <div className="shrink-0 w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
+                          <HandPlatter className="w-5 h-5 text-primary" />
+                        </div>
+
+                        {/* Meal Info */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-main-text">{meal.name}</h3>
+                          <p className="text-sm text-muted-text mt-0.5 line-clamp-1">{meal.description}</p>
+                        </div>
+
+                        {/* Yes/No Buttons - Hidden if user already selected a different meal */}
+                        {!hideButtons ? (
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              onClick={() => handleMealSelection(user.id, meal.id, true)}
+                              className={`w-16 h-9 rounded-lg text-sm font-medium transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                                isYes
+                                  ? 'bg-success text-white'
+                                  : 'bg-gray-100 text-muted-text hover:bg-success/10 hover:text-success'
+                              }`}
+                            >
+                              <Check className="w-4 h-4" />
+                              Yes
+                            </button>
+                            <button
+                              onClick={() => handleMealSelection(user.id, meal.id, false)}
+                              className={`w-16 h-9 rounded-lg text-sm font-medium transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                                isNo
+                                  ? 'bg-gray-600 text-white'
+                                  : 'bg-gray-100 text-muted-text hover:bg-gray-200'
+                              }`}
+                            >
+                              <X className="w-4 h-4" />
+                              No
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-xs text-muted-text italic">Already selected</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Skip Meal Button - Only show if no meal selected yet */}
+                {!hasSelectedMeal && (
+                  <div className="px-4 py-3 bg-gray-50">
+                    <button
+                      onClick={() => handleSkipMeal(user.id)}
+                      className="w-full py-2 px-4 border border-gray-300 rounded-lg text-sm font-medium text-muted-text hover:bg-gray-100 transition-colors"
+                    >
+                      Skip All Meals
+                    </button>
+                  </div>
+                )}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
 
         {/* Review Selections Button */}
-        <Link href="/select_names/select_menu/review_submit">
-          <button 
-            disabled={!allSelectionsComplete}
-            className={`w-full rounded-lg h-12 flex items-center justify-center font-medium transition-colors ${
-              allSelectionsComplete 
-                ? 'bg-black hover:bg-gray-900 text-white cursor-pointer' 
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            Review Selections
-          </button>
-        </Link>
-        
-        {allSelectionsComplete && (
-          <p className="text-center text-sm text-green-600 mt-3">All selections complete</p>
-        )}
+        <div>
+          <Link href="/select_names/select_menu/review_submit" className="block">
+            <button
+              disabled={!allSelectionsComplete}
+              className={`w-full rounded-xl h-12 flex items-center justify-center font-medium transition-colors cursor-pointer ${
+                allSelectionsComplete
+                  ? 'bg-primary hover:bg-primary-hover text-white shadow-lg shadow-primary/25'
+                  : 'bg-gray-200 text-muted-text cursor-not-allowed'
+              }`}
+            >
+              Review Selections
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </button>
+          </Link>
+
+          {allSelectionsComplete && (
+            <p className="text-center text-sm text-success mt-3 font-medium">All selections complete</p>
+          )}
+        </div>
+
         </div>
       </main>
     </div>

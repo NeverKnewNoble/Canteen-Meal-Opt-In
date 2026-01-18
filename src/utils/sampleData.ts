@@ -1,17 +1,20 @@
 // Sample data for the canteen meal opt-in system
 
-import type { 
-  User, 
-  Meal, 
-  UserSelectionData, 
-  AdminMeal, 
-  Selection, 
-  DepartmentData, 
-  MealPopularity, 
-  RecentActivity, 
+import type {
+  User,
+  Meal,
+  UserSelectionData,
+  AdminMeal,
+  Selection,
+  SelectionDisplay,
+  DepartmentData,
+  MealPopularity,
+  RecentActivity,
   UpcomingMeal,
   ReportData,
-  DashboardStat
+  DashboardStat,
+  Menu,
+  MenuMeal
 } from '@/types';
 import { Users, UtensilsCrossed, Calendar, TrendingUp } from 'lucide-react';
 
@@ -136,13 +139,19 @@ export const sampleAdminMeals: AdminMeal[] = [
   { id: '5', name: 'Vegetable Stir Fry', date: '2026-01-11', deadline: '2026-01-10 16:00', status: 'completed' },
 ];
 
-export const sampleSelections: Selection[] = [
-  { id: '1', userName: 'Lisa Anderson', department: 'Marketing', mealName: 'Rice with Chicken Curry', mealDate: '2026-01-13', optedIn: true },
-  { id: '2', userName: 'John Smith', department: 'Engineering', mealName: 'Rice with Chicken Curry', mealDate: '2026-01-13', optedIn: false },
-  { id: '3', userName: 'Sarah Johnson', department: 'Marketing', mealName: 'Rice with Chicken Curry', mealDate: '2026-01-13', optedIn: true },
-  { id: '4', userName: 'Michael Brown', department: 'Sales', mealName: 'Rice with Chicken Curry', mealDate: '2026-01-13', optedIn: true },
-  { id: '5', userName: 'Emily Davis', department: 'Engineering', mealName: 'Rice with Chicken Curry', mealDate: '2026-01-13', optedIn: false },
-  { id: '6', userName: 'David Wilson', department: 'HR', mealName: 'Rice with Chicken Curry', mealDate: '2026-01-13', optedIn: true },
+export const sampleSelections: SelectionDisplay[] = [
+  { id: '1', userName: 'Lisa Anderson', department: 'Marketing', mealName: 'Rice with Chicken Curry', mealDate: '2026-01-13', optedIn: true, menuName: 'Monday Special Menu' },
+  { id: '2', userName: 'John Smith', department: 'Engineering', mealName: 'Rice with Chicken Curry', mealDate: '2026-01-13', optedIn: false, menuName: 'Monday Special Menu' },
+  { id: '3', userName: 'Sarah Johnson', department: 'Marketing', mealName: 'Rice with Chicken Curry', mealDate: '2026-01-13', optedIn: true, menuName: 'Monday Special Menu' },
+  { id: '4', userName: 'Michael Brown', department: 'Sales', mealName: 'Rice with Chicken Curry', mealDate: '2026-01-13', optedIn: true, menuName: 'Monday Special Menu' },
+  { id: '5', userName: 'Emily Davis', department: 'Engineering', mealName: 'Rice with Chicken Curry', mealDate: '2026-01-13', optedIn: false, menuName: 'Monday Special Menu' },
+  { id: '6', userName: 'David Wilson', department: 'HR', mealName: 'Rice with Chicken Curry', mealDate: '2026-01-13', optedIn: true, menuName: 'Monday Special Menu' },
+  { id: '7', userName: 'Jennifer Martinez', department: 'Finance', mealName: 'Pasta Carbonara', mealDate: '2026-01-14', optedIn: true, menuName: 'Tuesday Comfort Food' },
+  { id: '8', userName: 'Robert Taylor', department: 'Operations', mealName: 'Pasta Carbonara', mealDate: '2026-01-14', optedIn: false, menuName: 'Tuesday Comfort Food' },
+  { id: '9', userName: 'James Thomas', department: 'Engineering', mealName: 'Beef Burger', mealDate: '2026-01-14', optedIn: true, menuName: 'Tuesday Comfort Food' },
+  { id: '10', userName: 'Maria Garcia', department: 'Sales', mealName: 'Caesar Salad', mealDate: '2026-01-14', optedIn: true, menuName: 'Tuesday Comfort Food' },
+  { id: '11', userName: 'William Jones', department: 'Design', mealName: 'Grilled Salmon', mealDate: '2026-01-19', optedIn: true, menuName: 'Friday Seafood Special' },
+  { id: '12', userName: 'Patricia Miller', department: 'HR', mealName: 'Fish and Chips', mealDate: '2026-01-19', optedIn: false, menuName: 'Friday Seafood Special' },
 ];
 
 export const sampleDepartmentData: DepartmentData[] = [
@@ -217,3 +226,106 @@ export const sampleReportData: ReportData = {
     }
   ]
 };
+
+// Sample Menus for the new menu management system
+export const sampleMenus: Menu[] = [
+  {
+    id: 'menu-1',
+    name: 'Monday Special Menu',
+    date: '2024-01-22',
+    deadline: '2024-01-21T17:00:00',
+    status: 'active',
+    todays_special: 'meal-1',
+    meals: [
+      {
+        id: 'meal-1',
+        name: 'Grilled Chicken Salad',
+        description: 'Fresh garden greens with grilled chicken breast, cherry tomatoes, and house vinaigrette',
+        menu_id: 'menu-1',
+        date: '2024-01-22',
+        created_at: '2024-01-20T10:00:00',
+      },
+      {
+        id: 'meal-2',
+        name: 'Pasta Carbonara',
+        description: 'Classic Italian pasta with creamy egg sauce, pancetta, and parmesan cheese',
+        menu_id: 'menu-1',
+        date: '2024-01-22',
+        created_at: '2024-01-20T10:00:00',
+      },
+      {
+        id: 'meal-3',
+        name: 'Vegetable Stir Fry',
+        description: 'Mixed vegetables stir-fried with ginger, garlic, and soy sauce',
+        menu_id: 'menu-1',
+        date: '2024-01-22',
+        created_at: '2024-01-20T10:00:00',
+      },
+    ],
+    created_at: '2024-01-20T10:00:00',
+  },
+  {
+    id: 'menu-2',
+    name: 'Tuesday Comfort Food',
+    date: '2024-01-23',
+    deadline: '2024-01-22T17:00:00',
+    status: 'upcoming',
+    todays_special: null,
+    meals: [
+      {
+        id: 'meal-4',
+        name: 'Beef Burger',
+        description: 'Juicy beef patty with lettuce, tomato, onion, and special sauce',
+        menu_id: 'menu-2',
+        date: '2024-01-23',
+        created_at: '2024-01-20T11:00:00',
+      },
+      {
+        id: 'meal-5',
+        name: 'Caesar Salad',
+        description: 'Romaine lettuce, parmesan cheese, croutons, and Caesar dressing',
+        menu_id: 'menu-2',
+        date: '2024-01-23',
+        created_at: '2024-01-20T11:00:00',
+      },
+    ],
+    created_at: '2024-01-20T11:00:00',
+  },
+  {
+    id: 'menu-3',
+    name: 'Wednesday International',
+    date: '2024-01-24',
+    deadline: '2024-01-23T17:00:00',
+    status: 'upcoming',
+    todays_special: null,
+    meals: [],
+    created_at: '2024-01-20T12:00:00',
+  },
+  {
+    id: 'menu-4',
+    name: 'Friday Seafood Special',
+    date: '2024-01-19',
+    deadline: '2024-01-18T17:00:00',
+    status: 'completed',
+    todays_special: 'meal-6',
+    meals: [
+      {
+        id: 'meal-6',
+        name: 'Grilled Salmon',
+        description: 'Atlantic salmon grilled to perfection with lemon butter sauce',
+        menu_id: 'menu-4',
+        date: '2024-01-19',
+        created_at: '2024-01-17T10:00:00',
+      },
+      {
+        id: 'meal-7',
+        name: 'Fish and Chips',
+        description: 'Beer-battered cod with crispy fries and tartar sauce',
+        menu_id: 'menu-4',
+        date: '2024-01-19',
+        created_at: '2024-01-17T10:00:00',
+      },
+    ],
+    created_at: '2024-01-17T10:00:00',
+  },
+];
