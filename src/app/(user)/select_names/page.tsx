@@ -4,6 +4,7 @@ import { Search, UserPlus, ArrowRight, X, Plus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getAllUsers } from '@/utils/users';
 import { getAllDepartments } from '@/utils/departments';
+import type { Department } from '@/types/department';
 import type { User } from '@/types';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';

@@ -10,7 +10,7 @@ import { getAllMenus } from '@/utils/menu';
 import { getAllMeals } from '@/utils/meals';
 import { getAllUsers } from '@/utils/users';
 import type { Selection } from '@/types/selection';
-import type { Department } from '@/utils/departments';
+import type { Department } from '@/types/department';
 import type { Menu } from '@/types/menu';
 import type { Meal } from '@/types/meal';
 import type { User } from '@/types';

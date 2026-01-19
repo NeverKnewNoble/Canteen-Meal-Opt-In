@@ -13,7 +13,7 @@ import {
   type ValidationResult,
   type ImportResult
 } from '@/utils/bulkImport';
-import type { Department } from '@/utils/departments';
+import type { Department } from '@/types/department';
 
 interface BulkImportModalProps {
   isOpen: boolean;
