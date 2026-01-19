@@ -1,8 +1,4 @@
-import type { ReactNode } from "react";
-
-type HomeLayoutProps = {
-  children: ReactNode;
-};
+import type { HomeLayoutProps } from '@/types/layout';
 
 export default function HomeLayout({ children }: HomeLayoutProps) {
   // Simple pass-through layout for the (home) segment.

@@ -1,50 +1,81 @@
 'use client';
 
 import { Clock, Check, X, CalendarDays, Sparkles, ChevronDown, HandPlatter, Send } from 'lucide-react';
-import { useState } from 'react';
-import { sampleMeals } from '@/utils/sampleData';
-import type { User } from '@/types';
+import { useState, useEffect } from 'react';
+import { createSelection } from '@/utils/selections';
+import { getTomorrowsMenu } from '@/utils/menu';
+import { getMealsByMenuId } from '@/utils/meals';
+import { getAllDepartments } from '@/utils/departments';
+import type { User, Menu, Meal } from '@/types';
+import type { MealSelection, UserMealSelectionsWithUser } from '@/types/selection';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
-// Types matching select_menu page
-type MealSelection = {
-  mealId: string;
-  optIn: boolean;
-};
-
-type UserMealSelections = {
-  user: User;
-  meals: MealSelection[];
-};
-
 export default function ReviewSubmit() {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [menu, setMenu] = useState<Menu | null>(null);
+  const [departments, setDepartments] = useState<Map<string, string>>(new Map());
+  const [userSelections, setUserSelections] = useState<UserMealSelectionsWithUser[]>([]);
 
-  // Sample data matching select_menu structure
-  const meals = sampleMeals;
-  const userSelections: UserMealSelections[] = [
-    {
-      user: { id: '1', name: 'Lisa Anderson', department: 'Marketing' },
-      meals: [
-        { mealId: 'vegetarian', optIn: true },
-        { mealId: 'chicken', optIn: true },
-        { mealId: 'salad', optIn: false },
-        { mealId: 'fish', optIn: true },
-        { mealId: 'sandwich', optIn: false },
-      ]
-    },
-    {
-      user: { id: '2', name: 'John Smith', department: 'Engineering' },
-      meals: [
-        { mealId: 'vegetarian', optIn: false },
-        { mealId: 'chicken', optIn: true },
-        { mealId: 'salad', optIn: true },
-        { mealId: 'fish', optIn: false },
-        { mealId: 'sandwich', optIn: true },
-      ]
-    },
-  ];
+  // Load data on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Load selected users from localStorage
+        const storedUsers = localStorage.getItem('selectedUsers');
+        const users = storedUsers ? JSON.parse(storedUsers) : [];
+        setSelectedUsers(users);
+
+        // Get tomorrow's menu
+        const tomorrowMenu = await getTomorrowsMenu();
+        if (!tomorrowMenu) {
+          console.error('No menu found for tomorrow');
+          setLoading(false);
+          return;
+        }
+        setMenu(tomorrowMenu);
+
+        // Get meals for tomorrow's menu
+        const menuMeals = await getMealsByMenuId(tomorrowMenu.id);
+        setMeals(menuMeals);
+
+        // Get departments for display
+        const deptList = await getAllDepartments();
+        const deptMap = new Map<string, string>();
+        deptList.forEach(dept => {
+          deptMap.set(dept.id, dept.name);
+        });
+        setDepartments(deptMap);
+
+        // Load meal selections from localStorage
+        const storedSelections = localStorage.getItem('userMealSelections');
+        if (storedSelections) {
+          const selections = JSON.parse(storedSelections);
+          const userSelectionsData = selections.map((sel: any) => ({
+            userId: sel.userId,
+            user: users.find((u: User) => u.id === sel.userId) || { id: sel.userId, name: 'Unknown', department: null },
+            meals: sel.meals
+          }));
+          setUserSelections(userSelectionsData);
+        }
+
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  // Helper function to get department name
+  const getDepartmentName = (departmentId: string | null | undefined) => {
+    if (!departmentId) return 'No Department';
+    return departments.get(departmentId) || 'Unknown Department';
+  };
 
   // Track expanded users
   const [expandedUsers, setExpandedUsers] = useState<string[]>(
@@ -67,11 +98,37 @@ export default function ReviewSubmit() {
     return userMeals.filter(m => m.optIn).length;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitted(true);
-    setTimeout(() => {
-      window.location.href = '/success_submit';
-    }, 1500);
+    
+    try {
+      // Save all selections to database
+      const selectionPromises = userSelections.flatMap(userSel =>
+        userSel.meals
+          .filter(mealSel => mealSel.optIn !== null)
+          .map(mealSel =>
+            createSelection({
+              user_id: userSel.userId,
+              meal_id: mealSel.mealId,
+              opted_in: mealSel.optIn as boolean
+            })
+          )
+      );
+
+      await Promise.all(selectionPromises);
+      
+      // Clear localStorage after successful submission
+      localStorage.removeItem('userMealSelections');
+      localStorage.removeItem('selectedUsers');
+      
+      setTimeout(() => {
+        window.location.href = '/success_submit';
+      }, 1500);
+    } catch (error) {
+      console.error('Error submitting selections:', error);
+      setIsSubmitted(false);
+      // You might want to show an error message here
+    }
   };
 
   // Calculate totals
@@ -82,26 +139,36 @@ export default function ReviewSubmit() {
     <div className="min-h-screen bg-white">
       <Navbar title="Review & Submit" step="Step 3 of 3" backHref="/select_names/select_menu" />
 
-      <main className="flex justify-center px-4 py-8">
-        <div className="max-w-2xl w-full space-y-6">
+      {/* Loading State */}
+      {loading && (
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-text">Loading selections...</p>
+        </div>
+      )}
+
+      {/* Content */}
+      {!loading && (
+        <main className="flex justify-center px-4 py-8">
+          <div className="max-w-2xl w-full space-y-6">
 
         {/* Header Card */}
         <div className="bg-primary rounded-2xl p-5 text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Sparkles className="w-4 h-4 text-red-200" />
-            <span className="text-red-200 text-xs font-medium uppercase tracking-wider">Review Selections</span>
+            <span className="text-red-200 text-xs font-medium uppercase tracking-wider">{menu?.name || 'Review Selections'}</span>
             <Sparkles className="w-4 h-4 text-red-200" />
           </div>
           <h1 className="text-xl font-bold text-white mb-3">Confirm Your Choices</h1>
           <div className="flex items-center justify-center gap-4 text-sm text-red-100">
             <div className="flex items-center gap-1.5">
               <CalendarDays className="w-4 h-4" />
-              <span>Tuesday, Jan 13</span>
+              <span>{menu ? new Date(menu.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) : 'Tomorrow'}</span>
             </div>
             <div className="w-px h-4 bg-red-300/50" />
             <div className="flex items-center gap-1.5">
               <Clock className="w-4 h-4" />
-              <span>Closes 4:00 PM</span>
+              <span>Closes {menu ? new Date(menu.deadline).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '4:00 PM'}</span>
             </div>
           </div>
         </div>
@@ -138,7 +205,7 @@ export default function ReviewSubmit() {
                   </div>
                   <div className="text-left">
                     <p className="font-medium text-main-text">{userSel.user.name}</p>
-                    <p className="text-sm text-muted-text">{userSel.user.department}</p>
+                    <p className="text-sm text-muted-text">{getDepartmentName(userSel.user.department)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -232,6 +299,7 @@ export default function ReviewSubmit() {
 
         </div>
       </main>
+      )}
     </div>
   );
 }

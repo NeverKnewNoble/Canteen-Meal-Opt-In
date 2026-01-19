@@ -1,29 +1,62 @@
 'use client';
 
 import { CalendarDays, Clock, Check, X, ArrowRight, HandPlatter, Sparkles, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
-import { sampleMeals } from '@/utils/sampleData';
-import type { Meal, User } from '@/types';
+import { useState, useEffect } from 'react';
+import { getTomorrowsMenu } from '@/utils/menu';
+import { getMealsByMenuId } from '@/utils/meals';
+import { createSelection, getSelectionsByUserId } from '@/utils/selections';
+import { getAllDepartments } from '@/utils/departments';
+import type { Meal, User, Menu } from '@/types';
+import type { MealSelection, UserMealSelections } from '@/types/selection';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
-// Type for tracking meal selections per user
-type MealSelection = {
-  mealId: string;
-  optIn: boolean | null;
-};
-
-type UserMealSelections = {
-  userId: string;
-  meals: MealSelection[];
-};
-
 export default function SelectMenu() {
-  // Get selected users from localStorage or use sample data
-  const [selectedUsers] = useState<User[]>([
-    { id: '1', name: 'Lisa Anderson', department: 'Marketing' },
-    { id: '2', name: 'John Smith', department: 'Engineering' },
-  ]);
+  // State for data
+  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [menu, setMenu] = useState<Menu | null>(null);
+  const [departments, setDepartments] = useState<Map<string, string>>(new Map());
+  const [loading, setLoading] = useState(true);
+
+  // Load data on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Load selected users from localStorage
+        const storedUsers = localStorage.getItem('selectedUsers');
+        const users = storedUsers ? JSON.parse(storedUsers) : [];
+        setSelectedUsers(users);
+
+        // Get tomorrow's menu
+        const tomorrowMenu = await getTomorrowsMenu();
+        if (!tomorrowMenu) {
+          console.error('No menu found for tomorrow');
+          setLoading(false);
+          return;
+        }
+        setMenu(tomorrowMenu);
+
+        // Get meals for tomorrow's menu
+        const menuMeals = await getMealsByMenuId(tomorrowMenu.id);
+        setMeals(menuMeals);
+
+        // Get departments for display
+        const deptList = await getAllDepartments();
+        const deptMap = new Map<string, string>();
+        deptList.forEach(dept => {
+          deptMap.set(dept.id, dept.name);
+        });
+        setDepartments(deptMap);
+
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
 
   // Track which user cards are expanded
   const [expandedUsers, setExpandedUsers] = useState<string[]>(
@@ -38,18 +71,56 @@ export default function SelectMenu() {
     );
   };
 
-  // Get available meals
-  const meals = sampleMeals;
-
   // Initialize selections: each user has selections for each meal
-  const [userSelections, setUserSelections] = useState<UserMealSelections[]>(
-    selectedUsers.map(user => ({
-      userId: user.id,
-      meals: meals.map(meal => ({ mealId: meal.id, optIn: null }))
-    }))
-  );
+  const [userSelections, setUserSelections] = useState<UserMealSelections[]>([]);
+
+  // Load existing selections when data is ready
+  useEffect(() => {
+    if (selectedUsers.length > 0 && meals.length > 0) {
+      const initializeSelections = async () => {
+        try {
+          // Load existing selections for each user
+          const selectionsPromises = selectedUsers.map(async (user) => {
+            const existingSelections = await getSelectionsByUserId(user.id);
+            const userMealSelections = meals.map(meal => {
+              const existing = existingSelections.find(sel => 
+                sel.meal_id === meal.id && menu && meals.some(m => m.id === meal.id)
+              );
+              return {
+                mealId: meal.id,
+                optIn: existing ? existing.opted_in : null
+              };
+            });
+            return {
+              userId: user.id,
+              meals: userMealSelections
+            };
+          });
+
+          const initializedSelections = await Promise.all(selectionsPromises);
+          setUserSelections(initializedSelections);
+        } catch (error) {
+          console.error('Error loading selections:', error);
+          // Fallback to empty selections
+          const fallbackSelections = selectedUsers.map(user => ({
+            userId: user.id,
+            meals: meals.map(meal => ({ mealId: meal.id, optIn: null }))
+          }));
+          setUserSelections(fallbackSelections);
+        }
+      };
+      initializeSelections();
+    }
+  }, [selectedUsers, meals, menu]);
+
+  // Helper function to get department name
+  const getDepartmentName = (departmentId: string | null | undefined) => {
+    if (!departmentId) return 'No Department';
+    return departments.get(departmentId) || 'Unknown Department';
+  };
 
   const handleMealSelection = (userId: string, mealId: string, optIn: boolean) => {
+    // Update local state
     setUserSelections(prev =>
       prev.map(userSel => {
         if (userSel.userId !== userId) return userSel;
@@ -75,18 +146,38 @@ export default function SelectMenu() {
         };
       })
     );
+
+    // Save selections to localStorage
+    const updatedSelections = userSelections.map(userSel => {
+      if (userSel.userId !== userId) return userSel;
+      
+      const updatedMeals = userSel.meals.map(mealSel => {
+        if (mealSel.mealId === mealId) {
+          return { ...mealSel, optIn };
+        }
+        if (optIn === true && mealSel.mealId !== mealId) {
+          return { ...mealSel, optIn: false };
+        }
+        return mealSel;
+      });
+      
+      return { ...userSel, meals: updatedMeals };
+    });
+    
+    localStorage.setItem('userMealSelections', JSON.stringify(updatedSelections));
   };
 
   const handleSkipMeal = (userId: string) => {
-    setUserSelections(prev =>
-      prev.map(userSel => {
-        if (userSel.userId !== userId) return userSel;
-        return {
-          ...userSel,
-          meals: userSel.meals.map(mealSel => ({ ...mealSel, optIn: false }))
-        };
-      })
-    );
+    const updatedSelections = userSelections.map(userSel => {
+      if (userSel.userId !== userId) return userSel;
+      return {
+        ...userSel,
+        meals: userSel.meals.map(mealSel => ({ ...mealSel, optIn: false }))
+      };
+    });
+    
+    setUserSelections(updatedSelections);
+    localStorage.setItem('userMealSelections', JSON.stringify(updatedSelections));
   };
 
   const getMealSelection = (userId: string, mealId: string): boolean | null => {
@@ -119,23 +210,42 @@ export default function SelectMenu() {
       <main className="flex justify-center px-4 py-8">
         <div className="max-w-2xl w-full space-y-6">
 
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-text">Loading menu and users...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {!loading && (!menu || meals.length === 0) && (
+          <div className="text-center py-12">
+            <p className="text-red-500 font-medium">No menu available for tomorrow</p>
+            <p className="text-muted-text text-sm mt-2">Please check back later or contact an administrator</p>
+          </div>
+        )}
+
+        {/* Content */}
+        {!loading && menu && meals.length > 0 && (
+          <>
         {/* Header Card */}
         <div className="bg-primary rounded-2xl p-5 text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Sparkles className="w-4 h-4 text-red-200" />
-            <span className="text-red-200 text-xs font-medium uppercase tracking-wider">Tomorrow's Menu</span>
+            <span className="text-red-200 text-xs font-medium uppercase tracking-wider">{menu.name}</span>
             <Sparkles className="w-4 h-4 text-red-200" />
           </div>
           <h1 className="text-xl font-bold text-white mb-3">Select Your Meals</h1>
           <div className="flex items-center justify-center gap-4 text-sm text-red-100">
             <div className="flex items-center gap-1.5">
               <CalendarDays className="w-4 h-4" />
-              <span>Tuesday, Jan 13</span>
+              <span>{new Date(menu.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
             </div>
             <div className="w-px h-4 bg-red-300/50" />
             <div className="flex items-center gap-1.5">
               <Clock className="w-4 h-4" />
-              <span>Closes 4:00 PM</span>
+              <span>Closes {new Date(menu.deadline).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
             </div>
           </div>
         </div>
@@ -161,7 +271,7 @@ export default function SelectMenu() {
                   </div>
                   <div className="text-left">
                     <p className="font-medium text-main-text">{user.name}</p>
-                    <p className="text-sm text-muted-text">{user.department}</p>
+                    <p className="text-sm text-muted-text">{getDepartmentName(user.department)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -277,6 +387,8 @@ export default function SelectMenu() {
             <p className="text-center text-sm text-success mt-3 font-medium">All selections complete</p>
           )}
         </div>
+        </>
+        )}
 
         </div>
       </main>

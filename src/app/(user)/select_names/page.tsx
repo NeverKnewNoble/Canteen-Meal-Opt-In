@@ -1,8 +1,9 @@
 'use client';
 
 import { Search, UserPlus, ArrowRight, X, Plus } from 'lucide-react';
-import { useState } from 'react';
-import { sampleUsers } from '@/utils/sampleData';
+import { useState, useEffect } from 'react';
+import { getAllUsers } from '@/utils/users';
+import { getAllDepartments } from '@/utils/departments';
 import type { User } from '@/types';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
@@ -10,11 +11,50 @@ import Navbar from '@/components/Navbar';
 export default function SelectNames() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNames, setSelectedNames] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [departments, setDepartments] = useState<Map<string, string>>(new Map());
+
+  // Fetch all users and departments on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [users, deptList] = await Promise.all([
+          getAllUsers(),
+          getAllDepartments()
+        ]);
+        
+        setAllUsers(users);
+        
+        // Create department lookup map
+        const deptMap = new Map<string, string>();
+        deptList.forEach(dept => {
+          deptMap.set(dept.id, dept.name);
+        });
+        setDepartments(deptMap);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Helper function to get department name
+  const getDepartmentName = (departmentId: string | null | undefined) => {
+    if (!departmentId) return 'No Department';
+    return departments.get(departmentId) || 'Unknown Department';
+  };
+
+  // Save selected users to localStorage whenever they change
+  useEffect(() => {
+    if (selectedNames.length > 0) {
+      localStorage.setItem('selectedUsers', JSON.stringify(selectedNames));
+    }
+  }, [selectedNames]);
 
   // Filter users based on search query
-  const filteredUsers = sampleUsers.filter(user =>
+  const filteredUsers = allUsers.filter(user =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.department.toLowerCase().includes(searchQuery.toLowerCase())
+    getDepartmentName(user.department).toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const isSelected = (userId: string) => selectedNames.some(s => s.id === userId);
@@ -67,7 +107,7 @@ export default function SelectNames() {
                     </div>
                     <div>
                       <p className="font-medium text-main-text">{user.name}</p>
-                      <p className="text-sm text-muted-text">{user.department}</p>
+                      <p className="text-sm text-muted-text">{getDepartmentName(user.department)}</p>
                     </div>
                   </div>
                   {!isSelected(user.id) && (

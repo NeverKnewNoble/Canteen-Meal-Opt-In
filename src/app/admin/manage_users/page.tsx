@@ -1,13 +1,15 @@
 'use client';
 
-import { Search, Upload, Plus, Edit, Trash2, Users } from 'lucide-react';
+import { Search, Upload, Plus, Edit, Trash2, Users, Download } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import AddUserModal from '@/components/AddUserModal';
 import EditUserModal from '@/components/EditUserModal';
 import AddDepartmentModal from '@/components/AddDepartmentModal';
+import BulkImportModal from '@/components/BulkImportModal';
 import { getAllUsers, createUser, updateUser, deleteUser, searchUsers, getUsersByDepartment } from '@/utils/users';
 import { getAllDepartments, createDepartment, updateDepartment, deleteDepartment } from '@/utils/departments';
+import { downloadCSVTemplate } from '@/utils/bulkImport';
 import { toast } from '@/components/alert';
 import type { User } from '@/types';
 import type { Department } from '@/utils/departments';
@@ -22,6 +24,7 @@ export default function ManageUsers() {
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
   const [isDepartmentModalOpen, setIsDepartmentModalOpen] = useState(false);
+  const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   // Fetch users and departments from database on component mount
@@ -141,6 +144,21 @@ export default function ManageUsers() {
     setIsEditUserModalOpen(true);
   };
 
+  // Handle bulk import completion - refresh users list
+  const handleBulkImportComplete = async () => {
+    try {
+      const refreshedUsers = await getAllUsers();
+      setUsers(refreshedUsers);
+    } catch (error) {
+      console.error('Failed to refresh users:', error);
+    }
+  };
+
+  // Handle download template
+  const handleDownloadTemplate = () => {
+    downloadCSVTemplate(departments);
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar title="Manage Users" step="Admin" backHref="/admin" />
@@ -184,7 +202,17 @@ export default function ManageUsers() {
                   className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-main-text transition-all"
                 />
               </div>
-              <button className="bg-primary text-white px-4 py-3 rounded-lg flex items-center hover:bg-primary-hover transition-colors font-medium">
+              <button
+                onClick={handleDownloadTemplate}
+                className="bg-gray-100 text-main-text px-4 py-3 rounded-lg flex items-center hover:bg-gray-200 transition-colors font-medium border-2 border-gray-200"
+              >
+                <Download className="w-5 h-5 mr-2" />
+                Download Template
+              </button>
+              <button
+                onClick={() => setIsBulkImportModalOpen(true)}
+                className="bg-primary text-white px-4 py-3 rounded-lg flex items-center hover:bg-primary-hover transition-colors font-medium"
+              >
                 <Upload className="w-5 h-5 mr-2" />
                 Bulk Import (CSV)
               </button>
@@ -311,6 +339,13 @@ export default function ManageUsers() {
         onClose={() => setIsDepartmentModalOpen(false)}
         onAddDepartment={handleAddDepartment}
         existingDepartments={departments.map(dept => dept.name)}
+      />
+
+      <BulkImportModal
+        isOpen={isBulkImportModalOpen}
+        onClose={() => setIsBulkImportModalOpen(false)}
+        onImportComplete={handleBulkImportComplete}
+        departments={departments}
       />
     </div>
   );

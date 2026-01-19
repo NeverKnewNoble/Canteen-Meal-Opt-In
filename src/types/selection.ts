@@ -1,4 +1,5 @@
 // Selection related types matching Supabase schema
+import type { User } from './user';
 
 export interface Selection {
   id: string;
@@ -23,4 +24,21 @@ export interface SelectionFormData {
   user_id: string;
   meal_id: string;
   opted_in: boolean;
+}
+
+// Meal selection tracking types
+export interface MealSelection {
+  mealId: string;
+  optIn: boolean | null;
+}
+
+export interface UserMealSelections {
+  userId: string;
+  meals: MealSelection[];
+}
+
+export interface UserMealSelectionsWithUser {
+  userId: string;
+  user: User;
+  meals: MealSelection[];
 }

@@ -5,3 +5,4 @@ export * from './menu';
 export * from './selection';
 export * from './report';
 export * from './activity';
+export * from './layout';
