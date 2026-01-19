@@ -1,12 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/alert';
+import { Department } from '@/types/department';
 
-// Define Department type (you may want to move this to your types file)
-export interface Department {
-  id: string;
-  name: string;
-  created_at: string;
-}
 
 // Get all departments
 export const getAllDepartments = async (): Promise<Department[]> => {

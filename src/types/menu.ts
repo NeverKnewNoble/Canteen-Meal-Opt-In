@@ -28,8 +28,3 @@ export interface MenuFormData {
   status: MenuStatus;
 }
 
-export interface MealFormData {
-  name: string;
-  description: string;
-  menu_id: string;
-}

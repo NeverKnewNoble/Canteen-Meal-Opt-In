@@ -1,26 +1,139 @@
 'use client';
 
 import { Search, Download, Eye, ChevronLeft, Calendar, Users, CheckCircle, XCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import { sampleSelections } from '@/utils/sampleData';
-import type { SelectionDisplay } from '@/types';
-import { getUniqueMeals, getUniqueMenus, filterSelections, getSelectionCounts } from '@/utils/viewSelectionsUtils';
+import { getAllSelections } from '@/utils/selections';
+import { getAllDepartments } from '@/utils/departments';
+import { getAllMenus } from '@/utils/menu';
+import { getAllMeals } from '@/utils/meals';
+import { getAllUsers } from '@/utils/users';
+import type { Selection } from '@/types/selection';
+import type { Department } from '@/utils/departments';
+import type { Menu } from '@/types/menu';
+import type { Meal } from '@/types/meal';
+import type { User } from '@/types';
 
 export default function ViewSelections() {
   const [searchQuery, setSearchQuery] = useState('');
   const [menuFilter, setMenuFilter] = useState('All Menus');
-  const [mealFilter, setMealFilter] = useState('All Meals');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [selections] = useState<SelectionDisplay[]>(sampleSelections);
+  const [selections, setSelections] = useState<Selection[]>([]);
+  const [departments, setDepartments] = useState<Map<string, string>>(new Map());
+  const [menus, setMenus] = useState<Menu[]>([]);
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const menus = getUniqueMenus(selections);
-  const meals = getUniqueMeals(selections);
-  
-  const filteredSelections = filterSelections(selections, searchQuery, mealFilter, statusFilter, menuFilter);
+  // Load data on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [selectionsData, deptList, menusData, mealsData, usersData] = await Promise.all([
+          getAllSelections(),
+          getAllDepartments(),
+          getAllMenus(),
+          getAllMeals(),
+          getAllUsers()
+        ]);
 
-  const { optedInCount, skippedCount } = getSelectionCounts(filteredSelections);
+        setSelections(selectionsData);
+        setMenus(menusData);
+        setMeals(mealsData);
+        setUsers(usersData);
+
+        // Create department lookup map
+        const deptMap = new Map<string, string>();
+        deptList.forEach((dept: Department) => {
+          deptMap.set(dept.id, dept.name);
+        });
+        setDepartments(deptMap);
+      } catch (error) {
+        console.error('Failed to load data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  // Helper function to get user name
+  const getUserName = (userId: string | null | undefined) => {
+    if (!userId) return 'Unknown User';
+    const user = users.find(u => u.id === userId);
+    return user?.name || `User ${userId}`;
+  };
+
+  // Helper function to get user department
+  const getUserDepartment = (userId: string | null | undefined) => {
+    if (!userId) return 'No Department';
+    const user = users.find(u => u.id === userId);
+    return user?.department ? getDepartmentName(user.department) : 'No Department';
+  };
+
+  // Helper function to get department name
+  const getDepartmentName = (departmentId: string | null | undefined) => {
+    if (!departmentId) return 'No Department';
+    return departments.get(departmentId) || 'Unknown Department';
+  };
+
+  // Helper function to get menu name
+  const getMenuName = (menuId: string | null | undefined) => {
+    if (!menuId) return 'No Menu';
+    const menu = menus.find(m => m.id === menuId);
+    return menu?.name || 'Unknown Menu';
+  };
+
+  // Helper function to get meal name
+  const getMealName = (mealId: string | null | undefined) => {
+    if (!mealId) return 'No Meal';
+    const meal = meals.find(m => m.id === mealId);
+    return meal?.name || 'Unknown Meal';
+  };
+
+  // Helper function to get menu date from meal
+  const getMealDate = (mealId: string | null | undefined) => {
+    if (!mealId) return 'Unknown Date';
+    const meal = meals.find(m => m.id === mealId);
+    if (meal?.menu_id) {
+      const menu = menus.find(m => m.id === meal.menu_id);
+      return menu?.date || 'Unknown Date';
+    }
+    return 'Unknown Date';
+  };
+
+  // Get unique menu names for filter
+  const uniqueMenuNames = ['All Menus', ...menus.map(m => m.name)];
+
+  // Create menu name to ID map
+  const menuNameToIdMap = new Map<string, string>();
+  menus.forEach(menu => {
+    menuNameToIdMap.set(menu.name, menu.id);
+  });
+
+  // Filter selections
+  const filteredSelections = selections.filter(selection => {
+    const userName = getUserName(selection.user_id);
+    const userDept = getUserDepartment(selection.user_id);
+    
+    const matchesSearch = searchQuery === '' || 
+      userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      userDept.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesMenu = menuFilter === 'All Menus' || 
+      meals.find(m => m.id === selection.meal_id)?.menu_id === menuNameToIdMap.get(menuFilter);
+    
+    const matchesStatus = statusFilter === 'All' || 
+      (statusFilter === 'Yes' && selection.opted_in) || 
+      (statusFilter === 'No' && !selection.opted_in);
+    
+    return matchesSearch && matchesMenu && matchesStatus;
+  });
+
+  // Calculate counts
+  const optedInCount = filteredSelections.filter(s => s.opted_in).length;
+  const skippedCount = filteredSelections.filter(s => !s.opted_in).length;
 
   return (
     <div className="min-h-screen bg-white">
@@ -36,6 +149,13 @@ export default function ViewSelections() {
             </div>
           </div>
 
+          {/* Loading State */}
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+          <>
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="bg-white p-4 rounded-lg border border-gray-200">
@@ -91,17 +211,8 @@ export default function ViewSelections() {
                 onChange={(e) => setMenuFilter(e.target.value)}
                 className="w-auto px-4 text-main-text py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               >
-                {menus.map(menu => (
-                  <option key={menu} value={menu}>{menu}</option>
-                ))}
-              </select>
-              <select
-                value={mealFilter}
-                onChange={(e) => setMealFilter(e.target.value)}
-                className="w-auto px-4 text-main-text py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              >
-                {meals.map(meal => (
-                  <option key={meal} value={meal}>{meal}</option>
+                {uniqueMenuNames.map(menuName => (
+                  <option key={menuName} value={menuName}>{menuName}</option>
                 ))}
               </select>
               <select
@@ -142,44 +253,55 @@ export default function ViewSelections() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredSelections.map((selection) => (
-                  <tr key={selection.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-main-text">{selection.userName}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-muted-text">{selection.department}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-main-text">{selection.menuName || '-'}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-main-text">{selection.mealName}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-muted-text">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        {selection.mealDate}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {selection.optedIn ? (
-                        <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Yes
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-muted-text">
-                          <XCircle className="w-3 h-3 mr-1" />
-                          No
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {filteredSelections.map((selection) => {
+                  const meal = meals.find(m => m.id === selection.meal_id);
+                  const menu = menus.find(m => m.id === meal?.menu_id);
+                  
+                  return (
+                    <tr key={selection.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-main-text">
+                          {getUserName(selection.user_id)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-muted-text">
+                          {getUserDepartment(selection.user_id)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-main-text">{menu?.name || '-'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-main-text">{getMealName(selection.meal_id)}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center text-sm text-muted-text">
+                          <Calendar className="w-4 h-4 mr-1" />
+                          {getMealDate(selection.meal_id)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {selection.opted_in ? (
+                          <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Yes
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-muted-text">
+                            <XCircle className="w-3 h-3 mr-1" />
+                            No
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
+          </>
+          )}
         </div>
       </main>
     </div>
