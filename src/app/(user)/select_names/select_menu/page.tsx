@@ -6,6 +6,7 @@ import { getTomorrowsMenu } from '@/utils/menu';
 import { getMealsByMenuId } from '@/utils/meals';
 import { createSelection, getSelectionsByUserId } from '@/utils/selections';
 import { getAllDepartments } from '@/utils/departments';
+import type { Department } from '@/types/department';
 import type { Meal, User, Menu } from '@/types';
 import type { MealSelection, UserMealSelections } from '@/types/selection';
 import Link from 'next/link';

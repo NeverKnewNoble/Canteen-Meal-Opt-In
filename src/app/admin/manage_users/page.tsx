@@ -12,7 +12,7 @@ import { getAllDepartments, createDepartment, updateDepartment, deleteDepartment
 import { downloadCSVTemplate } from '@/utils/bulkImport';
 import { toast } from '@/components/alert';
 import type { User } from '@/types';
-import type { Department } from '@/utils/departments';
+import type { Department } from '@/types/department';
 
 export default function ManageUsers() {
   const [searchQuery, setSearchQuery] = useState('');
