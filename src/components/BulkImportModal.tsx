@@ -9,10 +9,8 @@ import {
   bulkCreateUsers,
   downloadCSVTemplate,
   readFileAsText,
-  type ParsedUserRow,
-  type ValidationResult,
-  type ImportResult
 } from '@/utils/bulkImport';
+import type { ParsedUserRow, ValidationResult, ImportResult } from '@/types/bulk_imports';
 import type { Department } from '@/types/department';
 
 interface BulkImportModalProps {
@@ -389,10 +387,10 @@ export default function BulkImportModal({
               </button>
               <button
                 onClick={handleImport}
-                disabled={validationResult.valid.length === 0 || isProcessing}
+                disabled={!validationResult || validationResult.valid.length === 0 || isProcessing}
                 className="px-5 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
-                Import {validationResult.valid.length} User(s)
+                Import {validationResult?.valid.length || 0} User(s)
               </button>
             </>
           )}

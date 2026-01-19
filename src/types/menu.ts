@@ -26,5 +26,6 @@ export interface MenuFormData {
   date: string;
   deadline: string;
   status: MenuStatus;
+  todays_special?: string | null;
 }
 
