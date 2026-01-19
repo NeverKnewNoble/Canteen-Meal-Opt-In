@@ -15,6 +15,7 @@ export default function AddMealToMenuModal({ isOpen, onClose, onAddMeal, menu }:
   const [formData, setFormData] = useState<MealFormData>({
     name: '',
     description: '',
+    menu_id: menu?.id || '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -30,6 +31,7 @@ export default function AddMealToMenuModal({ isOpen, onClose, onAddMeal, menu }:
     setFormData({
       name: '',
       description: '',
+      menu_id: menu?.id || '',
     });
     onClose();
   };
