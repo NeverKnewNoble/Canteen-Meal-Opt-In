@@ -90,23 +90,19 @@ export default function Reports() {
 
           <div class="stats">
             <div class="stat-card">
-              <div class="stat-label">Total Submissions</div>
-              <div class="stat-value">${selections.length}</div>
+              <div class="stat-label">Users Submitted</div>
+              <div class="stat-value">${usersSubmittedCount}</div>
             </div>
             <div class="stat-card">
               <div class="stat-label">Opted In (Yes)</div>
               <div class="stat-value" style="color: #059669;">${optedInCount}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Opted Out (No)</div>
-              <div class="stat-value" style="color: #6b7280;">${optedOutCount}</div>
             </div>
           </div>
 
           ${selectionsByMeal.map(({ meal, selections: mealSelections }) => `
             <div class="meal-section">
               <div class="meal-header">
-                <p class="meal-title">${meal.name} (${mealSelections.filter(s => s.optedIn).length} Yes, ${mealSelections.filter(s => !s.optedIn).length} No)</p>
+                <p class="meal-title">${meal.name} (${mealSelections.length} Opted In)</p>
                 <p class="meal-desc">${meal.description || ''}</p>
               </div>
               ${mealSelections.length > 0 ? `
@@ -116,7 +112,6 @@ export default function Reports() {
                       <th>#</th>
                       <th>Employee</th>
                       <th>Department</th>
-                      <th>Selection</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -125,7 +120,6 @@ export default function Reports() {
                         <td>${i + 1}</td>
                         <td>${s.userName}</td>
                         <td>${getDepartmentName(s.department)}</td>
-                        <td class="${s.optedIn ? 'yes' : 'no'}">${s.optedIn ? 'Yes' : 'No'}</td>
                       </tr>
                     `).join('')}
                   </tbody>
@@ -169,7 +163,7 @@ export default function Reports() {
     // Stats
     doc.setFontSize(11);
     doc.setTextColor(31, 41, 55);
-    doc.text(`Total: ${selections.length}  |  Yes: ${optedInCount}  |  No: ${optedOutCount}`, 14, 38);
+    doc.text(`Users Submitted: ${usersSubmittedCount}  |  Opted In: ${optedInCount}`, 14, 38);
 
     let yPosition = 48;
 
@@ -184,7 +178,7 @@ export default function Reports() {
       // Meal header
       doc.setFontSize(12);
       doc.setTextColor(31, 41, 55);
-      doc.text(`${meal.name} (${mealSelections.filter(s => s.optedIn).length} Yes, ${mealSelections.filter(s => !s.optedIn).length} No)`, 14, yPosition);
+      doc.text(`${meal.name} (${mealSelections.length} Opted In)`, 14, yPosition);
       yPosition += 6;
 
       if (meal.description) {
@@ -198,31 +192,19 @@ export default function Reports() {
         // Table
         autoTable(doc, {
           startY: yPosition,
-          head: [['#', 'Employee', 'Department', 'Selection']],
+          head: [['#', 'Employee', 'Department']],
           body: mealSelections.map((s, i) => [
             (i + 1).toString(),
             s.userName,
-            getDepartmentName(s.department),
-            s.optedIn ? 'Yes' : 'No'
+            getDepartmentName(s.department)
           ]),
           theme: 'grid',
           headStyles: { fillColor: [249, 250, 251], textColor: [107, 114, 128], fontSize: 9 },
           bodyStyles: { fontSize: 9, textColor: [31, 41, 55] },
           columnStyles: {
-            0: { cellWidth: 15 },
-            3: { cellWidth: 25 }
+            0: { cellWidth: 15 }
           },
-          margin: { left: 14, right: 14 },
-          didParseCell: (data) => {
-            if (data.column.index === 3 && data.section === 'body') {
-              if (data.cell.raw === 'Yes') {
-                data.cell.styles.textColor = [5, 150, 105];
-                data.cell.styles.fontStyle = 'bold';
-              } else {
-                data.cell.styles.textColor = [107, 114, 128];
-              }
-            }
-          }
+          margin: { left: 14, right: 14 }
         });
 
         yPosition = (doc as any).lastAutoTable.finalY + 15;
@@ -266,9 +248,8 @@ export default function Reports() {
       ['Status:', selectedMenu.status.charAt(0).toUpperCase() + selectedMenu.status.slice(1)],
       [''],
       ['SUMMARY'],
-      ['Total Submissions:', selections.length],
+      ['Users Submitted:', usersSubmittedCount],
       ['Opted In (Yes):', optedInCount],
-      ['Opted Out (No):', optedOutCount],
       [''],
       [''],
       ['DETAILED BREAKDOWN BY MEAL'],
@@ -277,27 +258,23 @@ export default function Reports() {
 
     // Add each meal section
     selectionsByMeal.forEach(({ meal, selections: mealSelections }) => {
-      const yesCount = mealSelections.filter(s => s.optedIn).length;
-      const noCount = mealSelections.filter(s => !s.optedIn).length;
-
       // Meal header
       fullReportData.push(['']);
       fullReportData.push([`MEAL: ${meal.name}`]);
       fullReportData.push([`Description: ${meal.description || 'N/A'}`]);
-      fullReportData.push([`Opted In (Yes): ${yesCount}`, '', `Opted Out (No): ${noCount}`, '', `Total: ${mealSelections.length}`]);
+      fullReportData.push([`Opted In: ${mealSelections.length}`, '', `Total: ${mealSelections.length}`]);
       fullReportData.push(['']);
 
       if (mealSelections.length > 0) {
         // Table header
-        fullReportData.push(['#', 'Employee Name', 'Department', 'Selection']);
+        fullReportData.push(['#', 'Employee Name', 'Department']);
 
         // Table rows
         mealSelections.forEach((s, i) => {
           fullReportData.push([
             i + 1,
             s.userName,
-            getDepartmentName(s.department),
-            s.optedIn ? 'YES' : 'NO'
+            getDepartmentName(s.department)
           ]);
         });
       } else {
@@ -327,19 +304,18 @@ export default function Reports() {
 
     // ============ SHEET 2: All Selections Table ============
     const allSelectionsData: (string | number)[][] = [
-      ['ALL MEAL SELECTIONS'],
+      ['ALL MEAL SELECTIONS (OPTED IN)'],
       [''],
-      ['#', 'Employee Name', 'Department', 'Meal', 'Selection']
+      ['#', 'Employee Name', 'Department', 'Meal']
     ];
 
     let rowNum = 1;
-    selections.forEach((s) => {
+    selections.filter(s => s.optedIn).forEach((s) => {
       allSelectionsData.push([
         rowNum,
         s.userName,
         getDepartmentName(s.department),
-        s.mealName,
-        s.optedIn ? 'YES' : 'NO'
+        s.mealName
       ]);
       rowNum++;
     });
@@ -410,22 +386,17 @@ export default function Reports() {
 
     // ============ Individual Meal Sheets ============
     selectionsByMeal.forEach(({ meal, selections: mealSelections }, mealIndex) => {
-      const yesCount = mealSelections.filter(s => s.optedIn).length;
-      const noCount = mealSelections.filter(s => !s.optedIn).length;
-
       const mealData: (string | number)[][] = [
         [`MEAL: ${meal.name}`],
         [''],
         ['Description:', meal.description || 'N/A'],
         [''],
         ['SUMMARY'],
-        ['Total Selections:', mealSelections.length],
-        ['Opted In (Yes):', yesCount],
-        ['Opted Out (No):', noCount],
+        ['Total Opted In:', mealSelections.length],
         [''],
         [''],
         ['EMPLOYEE SELECTIONS'],
-        ['#', 'Employee Name', 'Department', 'Selection']
+        ['#', 'Employee Name', 'Department']
       ];
 
       if (mealSelections.length > 0) {
@@ -433,20 +404,18 @@ export default function Reports() {
           mealData.push([
             i + 1,
             s.userName,
-            getDepartmentName(s.department),
-            s.optedIn ? 'YES' : 'NO'
+            getDepartmentName(s.department)
           ]);
         });
       } else {
-        mealData.push(['', 'No selections for this meal', '', '']);
+        mealData.push(['', 'No selections for this meal', '']);
       }
 
       const mealSheet = XLSX.utils.aoa_to_sheet(mealData);
       mealSheet['!cols'] = [
         { wch: 8 },
         { wch: 30 },
-        { wch: 25 },
-        { wch: 12 }
+        { wch: 25 }
       ];
 
       // Truncate sheet name to 31 chars (Excel limit) and add index to ensure uniqueness
@@ -486,11 +455,12 @@ export default function Reports() {
   // Calculate stats
   const optedInCount = selections.filter(s => s.optedIn).length;
   const optedOutCount = selections.filter(s => !s.optedIn).length;
+  const usersSubmittedCount = new Set(selections.map(s => s.userName)).size;
 
-  // Group selections by meal
+  // Group selections by meal (only Yes selections)
   const selectionsByMeal = meals.map(meal => ({
     meal,
-    selections: selections.filter(s => s.mealName === meal.name)
+    selections: selections.filter(s => s.mealName === meal.name && s.optedIn)
   }));
 
   // Menu Selection View
@@ -625,15 +595,15 @@ export default function Reports() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="bg-white p-5 rounded-xl border-2 border-gray-200">
               <div className="flex items-center">
                 <div className="bg-red-100 p-3 rounded-lg mr-4">
                   <Users className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-text">Total Submissions</p>
-                  <p className="text-2xl font-bold text-main-text">{selections.length}</p>
+                  <p className="text-sm text-muted-text">Users Submitted</p>
+                  <p className="text-2xl font-bold text-main-text">{usersSubmittedCount}</p>
                 </div>
               </div>
             </div>
@@ -645,17 +615,6 @@ export default function Reports() {
                 <div>
                   <p className="text-sm text-muted-text">Opted In (Yes)</p>
                   <p className="text-2xl font-bold text-main-text">{optedInCount}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white p-5 rounded-xl border-2 border-gray-200">
-              <div className="flex items-center">
-                <div className="bg-gray-100 p-3 rounded-lg mr-4">
-                  <XCircle className="w-6 h-6 text-muted-text" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-text">Opted Out (No)</p>
-                  <p className="text-2xl font-bold text-main-text">{optedOutCount}</p>
                 </div>
               </div>
             </div>
@@ -689,13 +648,7 @@ export default function Reports() {
                         <div className="flex items-center gap-2">
                           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                             <CheckCircle className="w-4 h-4 mr-1" />
-                            {mealSelections.filter(s => s.optedIn).length} Yes
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">
-                            <XCircle className="w-4 h-4 mr-1" />
-                            {mealSelections.filter(s => !s.optedIn).length} No
+                            {mealSelections.length} Opted In
                           </span>
                         </div>
                       </div>
@@ -716,9 +669,6 @@ export default function Reports() {
                           <th className="px-6 py-3 text-left text-xs font-medium text-muted-text uppercase tracking-wider">
                             Department
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-text uppercase tracking-wider">
-                            Selection
-                          </th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
@@ -732,19 +682,6 @@ export default function Reports() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-muted-text">{getDepartmentName(selection.department)}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              {selection.optedIn ? (
-                                <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                  <CheckCircle className="w-3.5 h-3.5 mr-1" />
-                                  Yes
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 text-muted-text">
-                                  <XCircle className="w-3.5 h-3.5 mr-1" />
-                                  No
-                                </span>
-                              )}
                             </td>
                           </tr>
                         ))}
