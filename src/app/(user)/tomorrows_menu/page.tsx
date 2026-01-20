@@ -102,7 +102,7 @@ export default function TomorrowsMenu() {
             <div className="bg-primary px-6 py-4 text-center">
               <div className="flex items-center justify-center gap-2 mb-1">
                 <Sparkles className="w-4 h-4 text-red-200" />
-                <span className="text-red-200 text-xs font-medium uppercase tracking-wider">Tomorrow's Special</span>
+                <span className="text-red-200 text-xs font-medium uppercase tracking-wider">Menu</span>
                 <Sparkles className="w-4 h-4 text-red-200" />
               </div>
               <h1 className="text-2xl font-bold text-white">
