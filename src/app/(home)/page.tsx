@@ -7,9 +7,10 @@ export default function Home() {
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <QrCode className="w-16 h-16 text-primary" />
+          <div className="flex justify-center ">
+            <img src="/joshob.png" alt="Logo" className="w-50 h-40" />
           </div>
+          
           <h1 className="font-bold text-3xl text-main-text mb-2">Canteen Meal Opt-In</h1>
           <p className="text-muted-text">Next-day meal planning system</p>
         </div>

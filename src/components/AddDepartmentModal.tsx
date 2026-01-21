@@ -1,16 +1,18 @@
 'use client';
 
-import { X, Building2 } from 'lucide-react';
+import { X, Building2, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import type { Department } from '@/types/department';
 
 interface AddDepartmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddDepartment: (departmentName: string) => void;
-  existingDepartments: string[];
+  onDeleteDepartment: (departmentId: string) => void;
+  departments: Department[];
 }
 
-export default function AddDepartmentModal({ isOpen, onClose, onAddDepartment, existingDepartments }: AddDepartmentModalProps) {
+export default function AddDepartmentModal({ isOpen, onClose, onAddDepartment, onDeleteDepartment, departments }: AddDepartmentModalProps) {
   const [name, setName] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -28,10 +30,14 @@ export default function AddDepartmentModal({ isOpen, onClose, onAddDepartment, e
     onClose();
   };
 
-  const isDuplicate = existingDepartments.some(
-    (dept) => dept.toLowerCase() === name.trim().toLowerCase()
+  const isDuplicate = departments.some(
+    (dept) => dept.name.toLowerCase() === name.trim().toLowerCase()
   );
   const isValid = name.trim().length > 0 && !isDuplicate;
+
+  const handleDeleteDepartment = async (departmentId: string) => {
+    onDeleteDepartment(departmentId);
+  };
 
   if (!isOpen) return null;
 
@@ -74,6 +80,31 @@ export default function AddDepartmentModal({ isOpen, onClose, onAddDepartment, e
               </p>
             )}
           </div>
+
+          {/* Existing Departments List */}
+          {departments.length > 0 && (
+            <div>
+              <h3 className="text-sm font-medium text-main-text mb-3">Existing Departments</h3>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {departments.map((department) => (
+                  <div
+                    key={department.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                  >
+                    <span className="text-sm text-main-text">{department.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteDepartment(department.id)}
+                      className="text-muted-text hover:text-primary hover:bg-red-100 p-1.5 rounded-lg transition-colors"
+                      title="Delete department"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Modal Footer */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">

@@ -33,7 +33,7 @@ export default function EditMealModal({ isOpen, onClose, onEditMeal, onSetSpecia
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (meal && formData.name && formData.description) {
+    if (meal && formData.name) {
       onEditMeal(meal.id, formData);
       handleClose();
     }
@@ -109,10 +109,9 @@ export default function EditMealModal({ isOpen, onClose, onEditMeal, onSetSpecia
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Enter detailed description of the meal..."
+              placeholder="Enter detailed description of the meal (optional)..."
               rows={4}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-main-text resize-none transition-all"
-              required
             />
           </div>
 
