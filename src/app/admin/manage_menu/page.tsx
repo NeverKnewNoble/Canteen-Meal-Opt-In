@@ -10,6 +10,7 @@ import AddMealToMenuModal from '@/components/AddMealToMenuModal';
 import EditMealModal from '@/components/EditMealModal';
 import { getAllMenus, createMenu, updateMenu, deleteMenu, getStatusColor, setTodaysSpecial } from '@/utils/menu';
 import { getAllMeals, createMeal, updateMeal, deleteMeal, getMealsByMenuId } from '@/utils/meals';
+import { toast } from '@/components/alert';
 import type { Menu, MenuMeal, MenuFormData, MealFormData } from '@/types';
 
 export default function ManageMenu() {
@@ -65,8 +66,16 @@ export default function ManageMenu() {
     try {
       const newMenu = await createMenu(menuData);
       setMenus([...menus, newMenu]);
-    } catch (error) {
+      toast.success("Menu created successfully!");
+    } catch (error: any) {
       console.error('Failed to add menu:', error);
+      
+      // Check for duplicate key constraint violation
+      if (error?.code === "23505" && error?.message?.includes('menu_date_key')) {
+        toast.error("You can't create more than 1 menu on the same date. Please choose a different date.");
+      } else {
+        toast.error("Failed to create menu. Please try again.");
+      }
     }
   };
   

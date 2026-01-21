@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarDays, Clock, UtensilsCrossed, ArrowRight, Sparkles, HandPlatter } from 'lucide-react';
+import { CalendarDays, Clock, UtensilsCrossed, ArrowRight, Sparkles, HandPlatter, Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
@@ -145,7 +145,15 @@ export default function TomorrowsMenu() {
                       <HandPlatter className="w-4 h-4 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-main-text">{meal.name}</h3>
+                      <div className="flex items-center gap-2 mb-1 justify-between">
+                        <h3 className="font-semibold text-main-text">{meal.name}</h3>
+                        {tomorrowMenu.todays_special === meal.id && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+                            <Star className="w-3 h-3 fill-current" />
+                            Today's Special
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-text mt-0.5">{meal.description}</p>
                     </div>
                   </div>
