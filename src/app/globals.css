@@ -5,8 +5,8 @@
   --foreground: #111827;
 
   /* Theme Colors */
-  --color-primary: #ff9a00;
-  --color-primary-hover: #e68500;
+  --color-primary: #e36d2e;
+  --color-primary-hover: #c55a28;
   --color-background: #FFFFFF;
   --color-card: #1E293B;
   --color-card-text: #E5E7EB;
@@ -23,8 +23,8 @@
   --font-mono: var(--font-geist-mono);
 
   /* Custom Theme Colors */
-  --color-primary: #ff9a00;
-  --color-primary-hover: #e68500;
+  --color-primary: #e36d2e;
+  --color-primary-hover: #c55a28;
   --color-card-bg: #1E293B;
   --color-card-text: #E5E7EB;
   --color-main-text: #111827;
