@@ -241,15 +241,12 @@ export const getMenusByDateRange = async (startDate: string, endDate: string): P
   }
 };
 
-// Get tomorrow's menu
-export const getTomorrowsMenu = async (): Promise<Menu | null> => {
+// Get the current active menu (prioritizes by date when multiple active menus exist)
+export const getActiveMenu = async (): Promise<Menu | null> => {
   try {
-    // Get tomorrow's date
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowString = tomorrow.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
 
-    const { data: menu, error } = await supabase
+    const { data: menus, error } = await supabase
       .from('menu')
       .select(`
         *,
@@ -261,15 +258,70 @@ export const getTomorrowsMenu = async (): Promise<Menu | null> => {
           created_at
         )
       `)
-      .eq('date', tomorrowString)
-      .single();
+      .eq('status', 'active')
+      .gte('date', today) // Get today's and future active menus
+      .order('date', { ascending: true }) // Prioritize earliest date
+      .limit(1); // Get only the first (earliest) active menu
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "not found" error
-      console.error('Error fetching tomorrow\'s menu:', error);
+    if (error) {
+      console.error('Error fetching active menu:', error);
       return null;
     }
 
-    return menu;
+    return menus?.[0] || null;
+  } catch (error) {
+    console.error('Error in getActiveMenu:', error);
+    return null;
+  }
+};
+
+// Get tomorrow's menu from active menus (prioritizes by date when multiple active menus exist)
+export const getTomorrowsMenu = async (): Promise<Menu | null> => {
+  try {
+    // Get tomorrow's date
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowString = tomorrow.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+
+    const { data: menus, error } = await supabase
+      .from('menu')
+      .select(`
+        *,
+        meals!meals_menu_id_fkey (
+          id,
+          name,
+          description,
+          menu_id,
+          created_at
+        )
+      `)
+      .eq('status', 'active')
+      .order('date', { ascending: true }); // Prioritize earliest date
+
+    if (error) {
+      console.error('Error fetching active menus:', error);
+      return null;
+    }
+
+    if (!menus || menus.length === 0) {
+      return null;
+    }
+
+    // If there's only one active menu, return it
+    if (menus.length === 1) {
+      return menus[0];
+    }
+
+    // If multiple active menus exist, use date logic:
+    // 1. First try to find a menu for tomorrow
+    // 2. If no tomorrow menu, return the earliest active menu
+    const tomorrowMenu = menus.find(menu => menu.date === tomorrowString);
+    if (tomorrowMenu) {
+      return tomorrowMenu;
+    }
+
+    // Return the earliest active menu if no tomorrow menu found
+    return menus[0];
   } catch (error) {
     console.error('Error in getTomorrowsMenu:', error);
     return null;

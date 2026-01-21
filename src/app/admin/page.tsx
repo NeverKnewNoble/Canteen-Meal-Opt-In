@@ -4,7 +4,7 @@ import { Calendar, Clock, ChevronLeft, FileText, UtensilsCrossed, Users } from '
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { getDashboardStats } from '@/utils/dashbaord';
-import { getTomorrowsMenu } from '@/utils/menu';
+import { getActiveMenu } from '@/utils/menu';
 import { useState, useEffect } from 'react';
 import type { Menu, DashboardStat } from '@/types';
 
@@ -17,12 +17,12 @@ export default function AdminDashboard() {
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
-        const [dashboardStats, tomorrowMenu] = await Promise.all([
+        const [dashboardStats, activeMenuData] = await Promise.all([
           getDashboardStats(),
-          getTomorrowsMenu()
+          getActiveMenu()
         ]);
         setStats(dashboardStats);
-        setActiveMenu(tomorrowMenu);
+        setActiveMenu(activeMenuData);
       } catch (error) {
         console.error('Failed to load dashboard data:', error);
       } finally {
@@ -86,7 +86,7 @@ export default function AdminDashboard() {
                             Active Menu
                           </span>
                         </div>
-                        <p className="text-sm text-muted-text">Tomorrow's lunch option</p>
+                        <p className="text-sm text-muted-text">Current active menu</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4 mt-4">
@@ -112,7 +112,7 @@ export default function AdminDashboard() {
                 <div className="text-center py-8">
                   <UtensilsCrossed className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-main-text mb-2">No Active Menu</h3>
-                  <p className="text-sm text-muted-text">No menu found for tomorrow</p>
+                  <p className="text-sm text-muted-text">No active menu found</p>
                   <Link href="/admin/manage_menu" className="mt-4 inline-block">
                     <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium">
                       Create Menu

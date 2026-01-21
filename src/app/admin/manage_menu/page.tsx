@@ -328,15 +328,13 @@ export default function ManageMenu() {
                                 <div className="flex-1 p-4">
                                   <div className="flex items-start justify-between mb-3">
                                     <div>
-                                      <div className="flex items-center gap-2 mb-1">
-                                        <h5 className="text-lg font-semibold text-main-text mb-1">{meal.name}</h5>
-                                        {menu.todays_special === meal.id && (
-                                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
-                                            <Star className="w-3 h-3 fill-current" />
-                                            Today's Special
-                                          </span>
-                                        )}
-                                      </div>
+                                      <h5 className="text-lg font-semibold text-main-text mb-1">{meal.name}</h5>
+                                      {menu.todays_special === meal.id && (
+                                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium shadow-sm">
+                                          <Star className="w-3 h-3 fill-current" />
+                                          Today's Special
+                                        </span>
+                                      )}
                                       <p className="text-sm text-muted-text leading-relaxed">{meal.description}</p>
                                     </div>
                                     

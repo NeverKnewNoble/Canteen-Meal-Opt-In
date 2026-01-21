@@ -87,7 +87,7 @@ export const getParticipationRate = async (): Promise<number> => {
   }
 };
 
-// Get active meals count (meals from active/upcoming menus)
+// Get active meals count (meals from active menus only)
 export const getActiveMeals = async (): Promise<number> => {
   try {
     const { count, error } = await supabase
@@ -97,7 +97,7 @@ export const getActiveMeals = async (): Promise<number> => {
         await supabase
           .from('menu')
           .select('id')
-          .in('status', ['active', 'upcoming'])
+          .eq('status', 'active')
       ).data?.map(menu => menu.id) || []);
 
     if (error) {
