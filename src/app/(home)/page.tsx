@@ -8,7 +8,7 @@ export default function Home() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center ">
-            <img src="/joshob.png" alt="Logo" className="w-50 h-40" />
+            <img src="/joshob.png" alt="Logo"  />
           </div>
           
           <h1 className="font-bold text-3xl text-main-text mb-2">Canteen Meal Opt-In</h1>
