@@ -34,7 +34,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navbar title="Admin Dashboard" step="Overview" backHref="/" />
+      <Navbar title="Admin Dashboard" step="Overview" />
 
       <main className="px-8 py-6">
         <div className="max-w-6xl mx-auto">

@@ -21,7 +21,7 @@ export default function AddMealToMenuModal({ isOpen, onClose, onAddMeal, menu }:
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (formData.name && formData.description && menu) {
+    if (formData.name && menu) {
       onAddMeal(formData);
       handleClose();
     }
@@ -80,10 +80,9 @@ export default function AddMealToMenuModal({ isOpen, onClose, onAddMeal, menu }:
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Enter detailed description of the meal..."
+              placeholder="Enter detailed description of the meal (optional)..."
               rows={4}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-main-text resize-none transition-all"
-              required
             />
           </div>
 

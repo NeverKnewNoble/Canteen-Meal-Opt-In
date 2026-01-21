@@ -112,6 +112,15 @@ export default function ManageUsers() {
   }
 };
 
+const handleDeleteDepartment = async (departmentId: string) => {
+  try {
+    await deleteDepartment(departmentId);
+    setDepartments(departments.filter(dept => dept.id !== departmentId));
+  } catch (error) {
+    console.error('Failed to delete department:', error);
+  }
+};
+
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
     if (query.trim() === '') {
@@ -338,7 +347,8 @@ export default function ManageUsers() {
         isOpen={isDepartmentModalOpen}
         onClose={() => setIsDepartmentModalOpen(false)}
         onAddDepartment={handleAddDepartment}
-        existingDepartments={departments.map(dept => dept.name)}
+        onDeleteDepartment={handleDeleteDepartment}
+        departments={departments}
       />
 
       <BulkImportModal

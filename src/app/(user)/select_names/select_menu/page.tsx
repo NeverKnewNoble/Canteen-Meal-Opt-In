@@ -60,9 +60,14 @@ export default function SelectMenu() {
   }, []);
 
   // Track which user cards are expanded
-  const [expandedUsers, setExpandedUsers] = useState<string[]>(
-    selectedUsers.map(u => u.id) // All expanded by default
-  );
+  const [expandedUsers, setExpandedUsers] = useState<string[]>([]);
+
+  // Initialize expanded users when selectedUsers are loaded
+  useEffect(() => {
+    if (selectedUsers.length > 0) {
+      setExpandedUsers(selectedUsers.map(u => u.id)); // All expanded by default
+    }
+  }, [selectedUsers]);
 
   const toggleUserExpanded = (userId: string) => {
     setExpandedUsers(prev =>
