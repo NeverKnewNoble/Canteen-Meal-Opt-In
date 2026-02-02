@@ -2,6 +2,44 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/components/alert';
 import type { Menu, MenuMeal, MenuFormData } from '@/types/menu';
 
+// Helper function to update expired menus to 'completed' status
+const updateExpiredMenus = async (menus: Menu[]): Promise<string[]> => {
+  const now = new Date();
+
+  // Find menus where deadline has passed
+  const expiredMenus = menus.filter(menu =>
+    menu.status === 'active' && new Date(menu.deadline) < now
+  );
+
+  if (expiredMenus.length === 0) {
+    return [];
+  }
+
+  const expiredIds = expiredMenus.map(menu => menu.id);
+
+  try {
+    const { error } = await supabase
+      .from('menu')
+      .update({ status: 'completed' })
+      .in('id', expiredIds);
+
+    if (error) {
+      console.error('Error updating expired menus:', error);
+      return [];
+    }
+
+    return expiredIds;
+  } catch (error) {
+    console.error('Error in updateExpiredMenus:', error);
+    return [];
+  }
+};
+
+// Helper function to filter out expired menus from results
+const filterActiveMenus = (menus: Menu[], expiredIds: string[]): Menu[] => {
+  return menus.filter(menu => !expiredIds.includes(menu.id));
+};
+
 // Set today's special meal for a menu
 export const setTodaysSpecial = async (menuId: string, mealId: string): Promise<Menu> => {
   try {
@@ -242,6 +280,7 @@ export const getMenusByDateRange = async (startDate: string, endDate: string): P
 };
 
 // Get the current active menu (prioritizes by date when multiple active menus exist)
+// Also updates any expired menus to 'completed' status
 export const getActiveMenu = async (): Promise<Menu | null> => {
   try {
     const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
@@ -260,15 +299,22 @@ export const getActiveMenu = async (): Promise<Menu | null> => {
       `)
       .eq('status', 'active')
       .gte('date', today) // Get today's and future active menus
-      .order('date', { ascending: true }) // Prioritize earliest date
-      .limit(1); // Get only the first (earliest) active menu
+      .order('date', { ascending: true }); // Prioritize earliest date
 
     if (error) {
       console.error('Error fetching active menu:', error);
       return null;
     }
 
-    return menus?.[0] || null;
+    if (!menus || menus.length === 0) {
+      return null;
+    }
+
+    // Update any expired menus to 'completed' and filter them out
+    const expiredIds = await updateExpiredMenus(menus);
+    const activeMenus = filterActiveMenus(menus, expiredIds);
+
+    return activeMenus[0] || null;
   } catch (error) {
     console.error('Error in getActiveMenu:', error);
     return null;
@@ -276,6 +322,7 @@ export const getActiveMenu = async (): Promise<Menu | null> => {
 };
 
 // Get tomorrow's menu from active menus (prioritizes by date when multiple active menus exist)
+// Also updates any expired menus to 'completed' status
 export const getTomorrowsMenu = async (): Promise<Menu | null> => {
   try {
     // Get tomorrow's date
@@ -307,21 +354,29 @@ export const getTomorrowsMenu = async (): Promise<Menu | null> => {
       return null;
     }
 
+    // Update any expired menus to 'completed' and filter them out
+    const expiredIds = await updateExpiredMenus(menus);
+    const activeMenus = filterActiveMenus(menus, expiredIds);
+
+    if (activeMenus.length === 0) {
+      return null;
+    }
+
     // If there's only one active menu, return it
-    if (menus.length === 1) {
-      return menus[0];
+    if (activeMenus.length === 1) {
+      return activeMenus[0];
     }
 
     // If multiple active menus exist, use date logic:
     // 1. First try to find a menu for tomorrow
     // 2. If no tomorrow menu, return the earliest active menu
-    const tomorrowMenu = menus.find(menu => menu.date === tomorrowString);
+    const tomorrowMenu = activeMenus.find(menu => menu.date === tomorrowString);
     if (tomorrowMenu) {
       return tomorrowMenu;
     }
 
     // Return the earliest active menu if no tomorrow menu found
-    return menus[0];
+    return activeMenus[0];
   } catch (error) {
     console.error('Error in getTomorrowsMenu:', error);
     return null;
