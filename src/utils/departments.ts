@@ -1,23 +1,10 @@
-import { supabase } from '@/lib/supabase';
+import { apiFetch } from '@/utils/api-client';
 import { toast } from '@/components/alert';
 import { Department } from '@/types/department';
 
-
-// Get all departments
 export const getAllDepartments = async (): Promise<Department[]> => {
   try {
-    const { data: departments, error } = await supabase
-      .from('departments')
-      .select('*')
-      .order('name', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching departments:', error);
-      toast.error('Failed to fetch departments');
-      throw error;
-    }
-
-    return departments || [];
+    return await apiFetch<Department[]>('/api/departments');
   } catch (error) {
     console.error('Error in getAllDepartments:', error);
     toast.error('Failed to load departments');
@@ -25,28 +12,14 @@ export const getAllDepartments = async (): Promise<Department[]> => {
   }
 };
 
-// Create a new department
 export const createDepartment = async (departmentData: {
   name: string;
 }): Promise<Department> => {
   try {
-    const { data, error } = await supabase
-      .from('departments')
-      .insert([
-        {
-          name: departmentData.name,
-          created_at: new Date().toISOString()
-        }
-      ])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating department:', error);
-      toast.error('Failed to create department');
-      throw error;
-    }
-
+    const data = await apiFetch<Department>('/api/departments', {
+      method: 'POST',
+      body: JSON.stringify({ name: departmentData.name }),
+    });
     toast.success('Department created successfully');
     return data;
   } catch (error) {
@@ -56,28 +29,20 @@ export const createDepartment = async (departmentData: {
   }
 };
 
-// Edit/update a department
-export const updateDepartment = async (departmentId: string, departmentData: {
-  name?: string;
-}): Promise<Department> => {
+export const updateDepartment = async (
+  departmentId: string,
+  departmentData: { name?: string }
+): Promise<Department> => {
   try {
-    const updateData: any = {};
-
-    if (departmentData.name !== undefined) updateData.name = departmentData.name;
-
-    const { data, error } = await supabase
-      .from('departments')
-      .update(updateData)
-      .eq('id', departmentId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error updating department:', error);
-      toast.error('Failed to update department');
-      throw error;
+    if (departmentData.name === undefined) {
+      const d = await getDepartmentById(departmentId);
+      if (!d) throw new Error('Department not found');
+      return d;
     }
-
+    const data = await apiFetch<Department>(`/api/departments/${departmentId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ name: departmentData.name }),
+    });
     toast.success('Department updated successfully');
     return data;
   } catch (error) {
@@ -87,20 +52,11 @@ export const updateDepartment = async (departmentId: string, departmentData: {
   }
 };
 
-// Delete a department
 export const deleteDepartment = async (departmentId: string): Promise<void> => {
   try {
-    const { error } = await supabase
-      .from('departments')
-      .delete()
-      .eq('id', departmentId);
-
-    if (error) {
-      console.error('Error deleting department:', error);
-      toast.error('Failed to delete department');
-      throw error;
-    }
-
+    await apiFetch<{ ok: boolean }>(`/api/departments/${departmentId}`, {
+      method: 'DELETE',
+    });
     toast.success('Department deleted successfully');
   } catch (error) {
     console.error('Error in deleteDepartment:', error);
@@ -109,68 +65,39 @@ export const deleteDepartment = async (departmentId: string): Promise<void> => {
   }
 };
 
-// Get department by ID
-export const getDepartmentById = async (departmentId: string): Promise<Department | null> => {
+export const getDepartmentById = async (
+  departmentId: string
+): Promise<Department | null> => {
   try {
-    const { data: department, error } = await supabase
-      .from('departments')
-      .select('*')
-      .eq('id', departmentId)
-      .single();
-
-    if (error) {
-      console.error('Error fetching department:', error);
-      return null;
-    }
-
-    return department;
-  } catch (error) {
-    console.error('Error in getDepartmentById:', error);
+    return await apiFetch<Department>(`/api/departments/${departmentId}`);
+  } catch {
     return null;
   }
 };
 
-// Search departments by name
-export const searchDepartments = async (searchQuery: string): Promise<Department[]> => {
+export const searchDepartments = async (
+  searchQuery: string
+): Promise<Department[]> => {
   try {
-    const { data: departments, error } = await supabase
-      .from('departments')
-      .select('*')
-      .ilike('name', `%${searchQuery}%`)
-      .order('name', { ascending: true });
-
-    if (error) {
-      console.error('Error searching departments:', error);
-      throw error;
-    }
-
-    return departments || [];
+    const q = new URLSearchParams({ q: searchQuery });
+    return await apiFetch<Department[]>(`/api/departments?${q}`);
   } catch (error) {
     console.error('Error in searchDepartments:', error);
     throw error;
   }
 };
 
-// Check if department name already exists
-export const checkDepartmentExists = async (name: string, excludeId?: string): Promise<boolean> => {
+export const checkDepartmentExists = async (
+  name: string,
+  excludeId?: string
+): Promise<boolean> => {
   try {
-    let query = supabase
-      .from('departments')
-      .select('id')
-      .ilike('name', name);
-
-    if (excludeId) {
-      query = query.neq('id', excludeId);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Error checking department existence:', error);
-      return false;
-    }
-
-    return (data && data.length > 0) || false;
+    const q = new URLSearchParams({ name });
+    if (excludeId) q.set('excludeId', excludeId);
+    const { exists } = await apiFetch<{ exists: boolean }>(
+      `/api/departments/check?${q}`
+    );
+    return exists;
   } catch (error) {
     console.error('Error in checkDepartmentExists:', error);
     return false;

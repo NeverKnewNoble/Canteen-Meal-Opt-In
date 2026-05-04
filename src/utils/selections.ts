@@ -1,22 +1,10 @@
-import { supabase } from '@/lib/supabase';
+import { apiFetch } from '@/utils/api-client';
 import { toast } from '@/components/alert';
 import type { Selection, SelectionFormData } from '@/types/selection';
 
-// Get all selections
 export const getAllSelections = async (): Promise<Selection[]> => {
   try {
-    const { data: selections, error } = await supabase
-      .from('selections')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching selections:', error);
-      toast.error('Failed to fetch selections');
-      throw error;
-    }
-
-    return selections || [];
+    return await apiFetch<Selection[]>('/api/selections');
   } catch (error) {
     console.error('Error in getAllSelections:', error);
     toast.error('Failed to load selections');
@@ -24,29 +12,14 @@ export const getAllSelections = async (): Promise<Selection[]> => {
   }
 };
 
-// Create a new selection
-export const createSelection = async (selectionData: SelectionFormData): Promise<Selection> => {
+export const createSelection = async (
+  selectionData: SelectionFormData
+): Promise<Selection> => {
   try {
-    const { data, error } = await supabase
-      .from('selections')
-      .insert([
-        {
-          user_id: selectionData.user_id,
-          meal_id: selectionData.meal_id,
-          opted_in: selectionData.opted_in,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating selection:', error);
-      toast.error('Unable to select meal');
-      throw error;
-    }
-
+    const data = await apiFetch<Selection>('/api/selections', {
+      method: 'POST',
+      body: JSON.stringify(selectionData),
+    });
     toast.success('Meal selected successfully');
     return data;
   } catch (error) {
@@ -56,28 +29,15 @@ export const createSelection = async (selectionData: SelectionFormData): Promise
   }
 };
 
-// Edit/update a selection
-export const updateSelection = async (selectionId: string, selectionData: Partial<SelectionFormData>): Promise<Selection> => {
+export const updateSelection = async (
+  selectionId: string,
+  selectionData: Partial<SelectionFormData>
+): Promise<Selection> => {
   try {
-    const updateData: any = {};
-
-    if (selectionData.user_id !== undefined) updateData.user_id = selectionData.user_id;
-    if (selectionData.meal_id !== undefined) updateData.meal_id = selectionData.meal_id;
-    if (selectionData.opted_in !== undefined) updateData.opted_in = selectionData.opted_in;
-
-    const { data, error } = await supabase
-      .from('selections')
-      .update(updateData)
-      .eq('id', selectionId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error updating selection:', error);
-      toast.error('Failed to update selection');
-      throw error;
-    }
-
+    const data = await apiFetch<Selection>(`/api/selections/${selectionId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(selectionData),
+    });
     toast.success('Selection updated successfully');
     return data;
   } catch (error) {
@@ -87,20 +47,11 @@ export const updateSelection = async (selectionId: string, selectionData: Partia
   }
 };
 
-// Delete a selection
 export const deleteSelection = async (selectionId: string): Promise<void> => {
   try {
-    const { error } = await supabase
-      .from('selections')
-      .delete()
-      .eq('id', selectionId);
-
-    if (error) {
-      console.error('Error deleting selection:', error);
-      toast.error('Failed to delete selection');
-      throw error;
-    }
-
+    await apiFetch<{ ok: boolean }>(`/api/selections/${selectionId}`, {
+      method: 'DELETE',
+    });
     toast.success('Selection deleted successfully');
   } catch (error) {
     console.error('Error in deleteSelection:', error);
@@ -109,22 +60,12 @@ export const deleteSelection = async (selectionId: string): Promise<void> => {
   }
 };
 
-// Get selections by user ID
-export const getSelectionsByUserId = async (userId: string): Promise<Selection[]> => {
+export const getSelectionsByUserId = async (
+  userId: string
+): Promise<Selection[]> => {
   try {
-    const { data: selections, error } = await supabase
-      .from('selections')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching selections by user ID:', error);
-      toast.error('Failed to fetch user selections');
-      throw error;
-    }
-
-    return selections || [];
+    const q = new URLSearchParams({ userId });
+    return await apiFetch<Selection[]>(`/api/selections?${q}`);
   } catch (error) {
     console.error('Error in getSelectionsByUserId:', error);
     toast.error('Failed to load user selections');
@@ -132,22 +73,12 @@ export const getSelectionsByUserId = async (userId: string): Promise<Selection[]
   }
 };
 
-// Get selections by meal ID
-export const getSelectionsByMealId = async (mealId: string): Promise<Selection[]> => {
+export const getSelectionsByMealId = async (
+  mealId: string
+): Promise<Selection[]> => {
   try {
-    const { data: selections, error } = await supabase
-      .from('selections')
-      .select('*')
-      .eq('meal_id', mealId)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching selections by meal ID:', error);
-      toast.error('Failed to fetch meal selections');
-      throw error;
-    }
-
-    return selections || [];
+    const q = new URLSearchParams({ mealId });
+    return await apiFetch<Selection[]>(`/api/selections?${q}`);
   } catch (error) {
     console.error('Error in getSelectionsByMealId:', error);
     toast.error('Failed to load meal selections');
@@ -155,7 +86,6 @@ export const getSelectionsByMealId = async (mealId: string): Promise<Selection[]
   }
 };
 
-// Selection with joined user and meal data for reports
 export interface SelectionWithDetails {
   id: string;
   userName: string;
@@ -165,47 +95,48 @@ export interface SelectionWithDetails {
   createdAt: string;
 }
 
-// Get selections by menu ID with joined user and meal data
-export const getSelectionsByMenuId = async (menuId: string): Promise<SelectionWithDetails[]> => {
+export interface BulkSelectionResult {
+  created: Selection[];
+  createdCount: number;
+  skippedUserIds: string[];
+  skippedCount: number;
+}
+
+export const bulkCreateSelections = async (payload: {
+  meal_id: string;
+  user_ids: string[];
+  opted_in: boolean;
+}): Promise<BulkSelectionResult> => {
   try {
-    const { data: selections, error } = await supabase
-      .from('selections')
-      .select(`
-        id,
-        opted_in,
-        created_at,
-        users!selections_user_id_fkey (
-          id,
-          name,
-          department
-        ),
-        meals!selections_meal_id_fkey (
-          id,
-          name,
-          menu_id
-        )
-      `)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching selections by menu ID:', error);
-      toast.error('Failed to fetch menu selections');
-      throw error;
+    const data = await apiFetch<BulkSelectionResult>('/api/selections/bulk', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    if (data.createdCount > 0) {
+      toast.success(
+        `Opted in ${data.createdCount} user${data.createdCount === 1 ? '' : 's'}` +
+          (data.skippedCount > 0
+            ? ` (${data.skippedCount} skipped — already chose)`
+            : '')
+      );
+    } else if (data.skippedCount > 0) {
+      toast.error('All selected users already have a selection for this meal');
     }
+    return data;
+  } catch (error) {
+    console.error('Error in bulkCreateSelections:', error);
+    toast.error('Failed to bulk opt-in users');
+    throw error;
+  }
+};
 
-    // Filter by menu_id and transform the data
-    const filteredSelections = (selections || [])
-      .filter((selection: any) => selection.meals?.menu_id === menuId)
-      .map((selection: any) => ({
-        id: selection.id,
-        userName: selection.users?.name || 'Unknown',
-        department: selection.users?.department || 'Unknown',
-        mealName: selection.meals?.name || 'Unknown',
-        optedIn: selection.opted_in,
-        createdAt: selection.created_at
-      }));
-
-    return filteredSelections;
+export const getSelectionsByMenuId = async (
+  menuId: string
+): Promise<SelectionWithDetails[]> => {
+  try {
+    return await apiFetch<SelectionWithDetails[]>(
+      `/api/selections/by-menu/${menuId}`
+    );
   } catch (error) {
     console.error('Error in getSelectionsByMenuId:', error);
     toast.error('Failed to load menu selections');

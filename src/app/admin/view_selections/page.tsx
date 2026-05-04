@@ -1,9 +1,10 @@
 'use client';
 
-import { Search, Download, Eye, ChevronLeft, Calendar, Users, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Download, Eye, ChevronLeft, Calendar, Users, CheckCircle, XCircle, UserPlus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import BulkOptInModal from '@/components/BulkOptInModal';
 import { getAllSelections } from '@/utils/selections';
 import { getAllDepartments } from '@/utils/departments';
 import { getAllMenus } from '@/utils/menu';
@@ -25,6 +26,7 @@ export default function ViewSelections() {
   const [meals, setMeals] = useState<Meal[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   // Load data on mount
   useEffect(() => {
@@ -57,6 +59,15 @@ export default function ViewSelections() {
     };
     loadData();
   }, []);
+
+  const refreshSelections = async () => {
+    try {
+      const updated = await getAllSelections();
+      setSelections(updated);
+    } catch (error) {
+      console.error('Failed to refresh selections:', error);
+    }
+  };
 
   // Helper function to get user name
   const getUserName = (userId: string | null | undefined) => {
@@ -142,11 +153,19 @@ export default function ViewSelections() {
       <main className="px-8 py-6">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="mb-6">
+          <div className="mb-6 flex items-start justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-main-text">View Selections</h1>
               <p className="text-muted-text">Review and manage meal selections</p>
             </div>
+            <button
+              onClick={() => setBulkOpen(true)}
+              disabled={loading}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              <UserPlus className="w-4 h-4" />
+              Bulk Opt-In
+            </button>
           </div>
 
           {/* Loading State */}
@@ -304,6 +323,20 @@ export default function ViewSelections() {
           )}
         </div>
       </main>
+
+      <BulkOptInModal
+        isOpen={bulkOpen}
+        onClose={() => setBulkOpen(false)}
+        onSuccess={refreshSelections}
+        menus={menus}
+        meals={meals}
+        users={users}
+        departments={departments}
+        existingSelections={selections.map((s) => ({
+          user_id: s.user_id,
+          meal_id: s.meal_id,
+        }))}
+      />
     </div>
   );
 }

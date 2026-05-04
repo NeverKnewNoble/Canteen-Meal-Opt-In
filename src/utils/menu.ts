@@ -1,61 +1,16 @@
-import { supabase } from '@/lib/supabase';
+import { apiFetch } from '@/utils/api-client';
 import { toast } from '@/components/alert';
-import type { Menu, MenuMeal, MenuFormData } from '@/types/menu';
+import type { Menu, MenuFormData } from '@/types/menu';
 
-// Helper function to update expired menus to 'completed' status
-const updateExpiredMenus = async (menus: Menu[]): Promise<string[]> => {
-  const now = new Date();
-
-  // Find menus where deadline has passed
-  const expiredMenus = menus.filter(menu =>
-    menu.status === 'active' && new Date(menu.deadline) < now
-  );
-
-  if (expiredMenus.length === 0) {
-    return [];
-  }
-
-  const expiredIds = expiredMenus.map(menu => menu.id);
-
+export const setTodaysSpecial = async (
+  menuId: string,
+  mealId: string
+): Promise<Menu> => {
   try {
-    const { error } = await supabase
-      .from('menu')
-      .update({ status: 'completed' })
-      .in('id', expiredIds);
-
-    if (error) {
-      console.error('Error updating expired menus:', error);
-      return [];
-    }
-
-    return expiredIds;
-  } catch (error) {
-    console.error('Error in updateExpiredMenus:', error);
-    return [];
-  }
-};
-
-// Helper function to filter out expired menus from results
-const filterActiveMenus = (menus: Menu[], expiredIds: string[]): Menu[] => {
-  return menus.filter(menu => !expiredIds.includes(menu.id));
-};
-
-// Set today's special meal for a menu
-export const setTodaysSpecial = async (menuId: string, mealId: string): Promise<Menu> => {
-  try {
-    const { data, error } = await supabase
-      .from('menu')
-      .update({ todays_special: mealId })
-      .eq('id', menuId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error setting today\'s special:', error);
-      toast.error('Failed to set special meal');
-      throw error;
-    }
-
+    const data = await apiFetch<Menu>(`/api/menu/${menuId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ todays_special: mealId }),
+    });
     toast.success('Special meal set successfully');
     return data;
   } catch (error) {
@@ -65,7 +20,6 @@ export const setTodaysSpecial = async (menuId: string, mealId: string): Promise<
   }
 };
 
-// Helper function to get status color
 export const getStatusColor = (status: string) => {
   switch (status) {
     case 'active':
@@ -79,21 +33,9 @@ export const getStatusColor = (status: string) => {
   }
 };
 
-// Get all menus
 export const getAllMenus = async (): Promise<Menu[]> => {
   try {
-    const { data: menus, error } = await supabase
-      .from('menu')
-      .select('*')
-      .order('date', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching menus:', error);
-      toast.error('Failed to fetch menus');
-      throw error;
-    }
-
-    return menus || [];
+    return await apiFetch<Menu[]>('/api/menu');
   } catch (error) {
     console.error('Error in getAllMenus:', error);
     toast.error('Failed to load menus');
@@ -101,30 +43,12 @@ export const getAllMenus = async (): Promise<Menu[]> => {
   }
 };
 
-// Create a new menu
 export const createMenu = async (menuData: MenuFormData): Promise<Menu> => {
   try {
-    const { data, error } = await supabase
-      .from('menu')
-      .insert([
-        {
-          name: menuData.name,
-          date: menuData.date,
-          deadline: menuData.deadline,
-          status: menuData.status,
-          todays_special: null, // Use null to avoid foreign key constraint
-          created_at: new Date().toISOString()
-        }
-      ])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating menu:', error);
-      toast.error('Failed to create menu');
-      throw error;
-    }
-
+    const data = await apiFetch<Menu>('/api/menu', {
+      method: 'POST',
+      body: JSON.stringify(menuData),
+    });
     toast.success('Menu created successfully');
     return data;
   } catch (error) {
@@ -134,29 +58,15 @@ export const createMenu = async (menuData: MenuFormData): Promise<Menu> => {
   }
 };
 
-// Edit/update a menu
-export const updateMenu = async (menuId: string, menuData: Partial<MenuFormData>): Promise<Menu> => {
+export const updateMenu = async (
+  menuId: string,
+  menuData: Partial<MenuFormData>
+): Promise<Menu> => {
   try {
-    const updateData: any = {};
-
-    if (menuData.name !== undefined) updateData.name = menuData.name;
-    if (menuData.date !== undefined) updateData.date = menuData.date;
-    if (menuData.deadline !== undefined) updateData.deadline = menuData.deadline;
-    if (menuData.status !== undefined) updateData.status = menuData.status;
-
-    const { data, error } = await supabase
-      .from('menu')
-      .update(updateData)
-      .eq('id', menuId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error updating menu:', error);
-      toast.error('Failed to update menu');
-      throw error;
-    }
-
+    const data = await apiFetch<Menu>(`/api/menu/${menuId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(menuData),
+    });
     toast.success('Menu updated successfully');
     return data;
   } catch (error) {
@@ -166,20 +76,9 @@ export const updateMenu = async (menuId: string, menuData: Partial<MenuFormData>
   }
 };
 
-// Delete a menu
 export const deleteMenu = async (menuId: string): Promise<void> => {
   try {
-    const { error } = await supabase
-      .from('menu')
-      .delete()
-      .eq('id', menuId);
-
-    if (error) {
-      console.error('Error deleting menu:', error);
-      toast.error('Failed to delete menu');
-      throw error;
-    }
-
+    await apiFetch<{ ok: boolean }>(`/api/menu/${menuId}`, { method: 'DELETE' });
     toast.success('Menu deleted successfully');
   } catch (error) {
     console.error('Error in deleteMenu:', error);
@@ -188,43 +87,18 @@ export const deleteMenu = async (menuId: string): Promise<void> => {
   }
 };
 
-// Get menu by ID
 export const getMenuById = async (menuId: string): Promise<Menu | null> => {
   try {
-    const { data: menu, error } = await supabase
-      .from('menu')
-      .select('*')
-      .eq('id', menuId)
-      .single();
-
-    if (error) {
-      console.error('Error fetching menu:', error);
-      return null;
-    }
-
-    return menu;
-  } catch (error) {
-    console.error('Error in getMenuById:', error);
+    return await apiFetch<Menu>(`/api/menu/${menuId}`);
+  } catch {
     return null;
   }
 };
 
-// Search menus by name
 export const searchMenus = async (searchQuery: string): Promise<Menu[]> => {
   try {
-    const { data: menus, error } = await supabase
-      .from('menu')
-      .select('*')
-      .ilike('name', `%${searchQuery}%`)
-      .order('date', { ascending: false });
-
-    if (error) {
-      console.error('Error searching menus:', error);
-      toast.error('Failed to search menus');
-      throw error;
-    }
-
-    return menus || [];
+    const q = new URLSearchParams({ search: searchQuery });
+    return await apiFetch<Menu[]>(`/api/menu?${q}`);
   } catch (error) {
     console.error('Error in searchMenus:', error);
     toast.error('Failed to search menus');
@@ -232,22 +106,10 @@ export const searchMenus = async (searchQuery: string): Promise<Menu[]> => {
   }
 };
 
-// Get menus by status
 export const getMenusByStatus = async (status: string): Promise<Menu[]> => {
   try {
-    const { data: menus, error } = await supabase
-      .from('menu')
-      .select('*')
-      .eq('status', status)
-      .order('date', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching menus by status:', error);
-      toast.error('Failed to fetch menus');
-      throw error;
-    }
-
-    return menus || [];
+    const q = new URLSearchParams({ status });
+    return await apiFetch<Menu[]>(`/api/menu?${q}`);
   } catch (error) {
     console.error('Error in getMenusByStatus:', error);
     toast.error('Failed to load menus');
@@ -255,23 +117,13 @@ export const getMenusByStatus = async (status: string): Promise<Menu[]> => {
   }
 };
 
-// Get menus by date range
-export const getMenusByDateRange = async (startDate: string, endDate: string): Promise<Menu[]> => {
+export const getMenusByDateRange = async (
+  startDate: string,
+  endDate: string
+): Promise<Menu[]> => {
   try {
-    const { data: menus, error } = await supabase
-      .from('menu')
-      .select('*')
-      .gte('date', startDate)
-      .lte('date', endDate)
-      .order('date', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching menus by date range:', error);
-      toast.error('Failed to fetch menus');
-      throw error;
-    }
-
-    return menus || [];
+    const q = new URLSearchParams({ startDate, endDate });
+    return await apiFetch<Menu[]>(`/api/menu?${q}`);
   } catch (error) {
     console.error('Error in getMenusByDateRange:', error);
     toast.error('Failed to load menus');
@@ -279,104 +131,20 @@ export const getMenusByDateRange = async (startDate: string, endDate: string): P
   }
 };
 
-// Get the current active menu (prioritizes by date when multiple active menus exist)
-// Also updates any expired menus to 'completed' status
+/** Server applies expiry rules and returns the current active menu with nested meals. */
 export const getActiveMenu = async (): Promise<Menu | null> => {
   try {
-    const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
-
-    const { data: menus, error } = await supabase
-      .from('menu')
-      .select(`
-        *,
-        meals!meals_menu_id_fkey (
-          id,
-          name,
-          description,
-          menu_id,
-          created_at
-        )
-      `)
-      .eq('status', 'active')
-      .gte('date', today) // Get today's and future active menus
-      .order('date', { ascending: true }); // Prioritize earliest date
-
-    if (error) {
-      console.error('Error fetching active menu:', error);
-      return null;
-    }
-
-    if (!menus || menus.length === 0) {
-      return null;
-    }
-
-    // Update any expired menus to 'completed' and filter them out
-    const expiredIds = await updateExpiredMenus(menus);
-    const activeMenus = filterActiveMenus(menus, expiredIds);
-
-    return activeMenus[0] || null;
+    return await apiFetch<Menu | null>('/api/menu/active');
   } catch (error) {
     console.error('Error in getActiveMenu:', error);
     return null;
   }
 };
 
-// Get tomorrow's menu from active menus (prioritizes by date when multiple active menus exist)
-// Also updates any expired menus to 'completed' status
+/** Server applies expiry rules and returns tomorrow’s menu (or earliest active) with meals. */
 export const getTomorrowsMenu = async (): Promise<Menu | null> => {
   try {
-    // Get tomorrow's date
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowString = tomorrow.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-
-    const { data: menus, error } = await supabase
-      .from('menu')
-      .select(`
-        *,
-        meals!meals_menu_id_fkey (
-          id,
-          name,
-          description,
-          menu_id,
-          created_at
-        )
-      `)
-      .eq('status', 'active')
-      .order('date', { ascending: true }); // Prioritize earliest date
-
-    if (error) {
-      console.error('Error fetching active menus:', error);
-      return null;
-    }
-
-    if (!menus || menus.length === 0) {
-      return null;
-    }
-
-    // Update any expired menus to 'completed' and filter them out
-    const expiredIds = await updateExpiredMenus(menus);
-    const activeMenus = filterActiveMenus(menus, expiredIds);
-
-    if (activeMenus.length === 0) {
-      return null;
-    }
-
-    // If there's only one active menu, return it
-    if (activeMenus.length === 1) {
-      return activeMenus[0];
-    }
-
-    // If multiple active menus exist, use date logic:
-    // 1. First try to find a menu for tomorrow
-    // 2. If no tomorrow menu, return the earliest active menu
-    const tomorrowMenu = activeMenus.find(menu => menu.date === tomorrowString);
-    if (tomorrowMenu) {
-      return tomorrowMenu;
-    }
-
-    // Return the earliest active menu if no tomorrow menu found
-    return activeMenus[0];
+    return await apiFetch<Menu | null>('/api/menu/tomorrow');
   } catch (error) {
     console.error('Error in getTomorrowsMenu:', error);
     return null;
