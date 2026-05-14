@@ -170,7 +170,7 @@ const handleDeleteDepartment = async (departmentId: string) => {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navbar title="Manage Users" step="Admin" backHref="/admin" />
+      <Navbar title="Manage Users" step="Admin" backHref="/canteen-control" />
 
       <main className="px-8 py-6">
         <div className="max-w-6xl mx-auto">

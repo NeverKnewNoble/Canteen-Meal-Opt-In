@@ -51,7 +51,7 @@ Next.js **route groups** in parentheses do **not** appear in the URL:
 |--------|------------|
 | `src/app/(home)/page.tsx` | `/` |
 | `src/app/(user)/…` | Paths like `/select_names`, `/tomorrows_menu` (no `(user)` in URL) |
-| `src/app/admin/…` | `/admin`, `/admin/manage_menu`, etc. |
+| `src/app/canteen-control/…` | `/canteen-control`, `/canteen-control/manage_menu`, etc. |
 
 ---
 
@@ -65,7 +65,7 @@ Below, **utils** means functions from `src/utils/*` that hit the API. **Local** 
 |-----|------|---------|
 | `/` | `src/app/(home)/page.tsx` | Landing: branding, short instructions, link to **Continue** → `/tomorrows_menu`. Server component; no data fetch. |
 | `/tomorrows_menu` | `src/app/(user)/tomorrows_menu/page.tsx` | Shows **tomorrow’s active menu** (meals, deadline, optional “today’s special”). Uses **`getTomorrowsMenu()`**. **Local:** `formatDate`, `formatDeadline`. Link into opt-in flow. |
-| `/select_names` | `src/app/(user)/select_names/page.tsx` | **Step 1:** Pick one or more users from the directory. **`getAllUsers`**, **`getAllDepartments`**. Builds a department id → name map. **Local:** `getDepartmentName`, filter by search. Persists **`selectedUsers`** in `localStorage`. |
+| `/select_names` | `src/app/(user)/select_names/page.tsx` | **Step 1:** Pick a single user from the directory (selecting another name replaces the current pick). **`getAllUsers`**, **`getAllDepartments`**. Builds a department id → name map. **Local:** `getDepartmentName`, filter by search. Persists **`selectedUsers`** in `localStorage`. |
 | `/select_names/select_menu` | `src/app/(user)/select_names/select_menu/page.tsx` | **Step 2:** For each selected user, set opt-in/out per meal. **`getTomorrowsMenu`**, **`getMealsByMenuId`**, **`getSelectionsByUserId`**, **`getAllDepartments`**. **Local:** expand/collapse user cards, sync selection state, persist **`userMealSelections`** to `localStorage`. |
 | `/select_names/select_menu/review_submit` | `src/app/(user)/select_names/select_menu/review_submit/page.tsx` | **Step 3:** Review then **`handleSubmit`**: loops users/meals and calls **`createSelection`** for each opted-in choice; clears storage; navigates to success. **Local:** `getDepartmentName`, `getMealName`, `getYesCount`, expand toggles. |
 | `/success_submit` | `src/app/(user)/success_submit/page.tsx` | Static success message; links back to `/select_names` or `/`. |
@@ -74,11 +74,11 @@ Below, **utils** means functions from `src/utils/*` that hit the API. **Local** 
 
 | URL | File | Purpose |
 |-----|------|---------|
-| `/admin` | `src/app/admin/page.tsx` | Dashboard: **`getDashboardStats`**, **`getActiveMenu`**. Stat cards link to manage users, menu, selections, reports. Shows active menu summary. |
-| `/admin/manage_menu` | `src/app/admin/manage_menu/page.tsx` | CRUD **menus** and **meals**, filter by search/status, set **today’s special** (`setTodaysSpecial`). Uses **`getAllMenus`**, **`getAllMeals`**, **`createMenu`**, **`updateMenu`**, **`deleteMenu`**, **`createMeal`**, **`updateMeal`**, **`deleteMeal`**, **`getMealsByMenuId`**, **`getStatusColor`**. **Local:** `getMealsForMenu`, handlers for modals, collapse state. |
-| `/admin/manage_users` | `src/app/admin/manage_users/page.tsx` | CRUD **users** and **departments**, CSV **bulk import**. **`getAllUsers`**, **`createUser`**, **`updateUser`**, **`deleteUser`**, **`searchUsers`**, **`getAllDepartments`**, department CRUD, **`downloadCSVTemplate`**. Modals: add/edit user, department, bulk import. **Local:** `getDepartmentName`, `handleSearch`, filters. |
-| `/admin/view_selections` | `src/app/admin/view_selections/page.tsx` | Table of all **selections** with filters; resolves user, department, meal, menu via joined data. **`getAllSelections`**, **`getAllDepartments`**, **`getAllMenus`**, **`getAllMeals`**, **`getAllUsers`**. **Local:** `getUserName`, `getUserDepartment`, `getDepartmentName`, `getMenuName`, `getMealName`, `getMealDate`, export helpers as implemented in file. |
-| `/admin/reports` | `src/app/admin/reports/page.tsx` | Pick a **menu**, load **`getSelectionsByMenuId`** (denormalized rows), **`getMealsByMenuId`**, build per-meal breakdown. **Local:** print (`handlePrint`), PDF (**jsPDF** / **autoTable**), Excel (**xlsx**), stats (submitted count, opt-in count). Uses **`getStatusColor`** for UI. |
+| `/canteen-control` | `src/app/canteen-control/page.tsx` | Dashboard: **`getDashboardStats`**, **`getActiveMenu`**. Stat cards link to manage users, menu, selections, reports. Shows active menu summary. |
+| `/canteen-control/manage_menu` | `src/app/canteen-control/manage_menu/page.tsx` | CRUD **menus** and **meals**, filter by search/status, set **today’s special** (`setTodaysSpecial`). Uses **`getAllMenus`**, **`getAllMeals`**, **`createMenu`**, **`updateMenu`**, **`deleteMenu`**, **`createMeal`**, **`updateMeal`**, **`deleteMeal`**, **`getMealsByMenuId`**, **`getStatusColor`**. **Local:** `getMealsForMenu`, handlers for modals, collapse state. |
+| `/canteen-control/manage_users` | `src/app/canteen-control/manage_users/page.tsx` | CRUD **users** and **departments**, CSV **bulk import**. **`getAllUsers`**, **`createUser`**, **`updateUser`**, **`deleteUser`**, **`searchUsers`**, **`getAllDepartments`**, department CRUD, **`downloadCSVTemplate`**. Modals: add/edit user, department, bulk import. **Local:** `getDepartmentName`, `handleSearch`, filters. |
+| `/canteen-control/view_selections` | `src/app/canteen-control/view_selections/page.tsx` | Table of all **selections** with filters; resolves user, department, meal, menu via joined data. **`getAllSelections`**, **`getAllDepartments`**, **`getAllMenus`**, **`getAllMeals`**, **`getAllUsers`**. **Local:** `getUserName`, `getUserDepartment`, `getDepartmentName`, `getMenuName`, `getMealName`, `getMealDate`, export helpers as implemented in file. |
+| `/canteen-control/reports` | `src/app/canteen-control/reports/page.tsx` | Pick a **menu**, load **`getSelectionsByMenuId`** (denormalized rows), **`getMealsByMenuId`**, build per-meal breakdown. **Local:** print (`handlePrint`), PDF (**jsPDF** / **autoTable**), Excel (**xlsx**), stats (submitted count, opt-in count). Uses **`getStatusColor`** for UI. |
 
 ---
 
@@ -267,10 +267,10 @@ Data persistence:
 
 ```mermaid
 flowchart TB
-  AD["/admin"] --> MU["/admin/manage_users"]
-  AD --> MM["/admin/manage_menu"]
-  AD --> VS["/admin/view_selections"]
-  AD --> RP["/admin/reports"]
+  AD["/canteen-control"] --> MU["/canteen-control/manage_users"]
+  AD --> MM["/canteen-control/manage_menu"]
+  AD --> VS["/canteen-control/view_selections"]
+  AD --> RP["/canteen-control/reports"]
 ```
 
 ---

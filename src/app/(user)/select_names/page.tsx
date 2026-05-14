@@ -45,10 +45,12 @@ export default function SelectNames() {
     return departments.get(departmentId) || 'Unknown Department';
   };
 
-  // Save selected users to localStorage whenever they change
+  // Save selected user to localStorage whenever it changes
   useEffect(() => {
     if (selectedNames.length > 0) {
       localStorage.setItem('selectedUsers', JSON.stringify(selectedNames));
+    } else {
+      localStorage.removeItem('selectedUsers');
     }
   }, [selectedNames]);
 
@@ -62,7 +64,7 @@ export default function SelectNames() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navbar title="Select Names" step="Step 1 of 3" backHref="/tomorrows_menu" />
+      <Navbar title="Select Name" step="Step 1 of 3" backHref="/tomorrows_menu" />
 
       <main className="flex justify-center px-4 py-8">
         <div className="max-w-2xl w-full space-y-8">
@@ -91,7 +93,8 @@ export default function SelectNames() {
                   key={user.id}
                   onClick={() => {
                     if (!isSelected(user.id)) {
-                      setSelectedNames([...selectedNames, user]);
+                      setSelectedNames([user]);
+                      setSearchQuery('');
                     }
                   }}
                   className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
@@ -123,14 +126,14 @@ export default function SelectNames() {
         {/* Selected Names Section */}
         <div>
           <h2 className="font-medium text-main-text mb-4">
-            Selected Names ({selectedNames.length})
+            Selected Name
           </h2>
 
           {selectedNames.length === 0 ? (
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
               <UserPlus className="w-12 h-12 text-muted-text mx-auto mb-4" />
-              <p className="text-muted-text font-medium mb-1">No names selected yet</p>
-              <p className="text-sm text-muted-text">Search and select at least one name to continue</p>
+              <p className="text-muted-text font-medium mb-1">No name selected yet</p>
+              <p className="text-sm text-muted-text">Search and select your name to continue</p>
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">

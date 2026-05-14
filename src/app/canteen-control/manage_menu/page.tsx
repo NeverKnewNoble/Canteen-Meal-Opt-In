@@ -202,7 +202,7 @@ export default function ManageMenu() {
   
   return (
     <div className="min-h-screen bg-white">
-      <Navbar title="Manage Menu" step="Admin" backHref="/admin" />
+      <Navbar title="Manage Menu" step="Admin" backHref="/canteen-control" />
       
       <main className="px-8 py-6">
         <div className="max-w-6xl mx-auto">

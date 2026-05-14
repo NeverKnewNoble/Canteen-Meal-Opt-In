@@ -101,7 +101,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="ml-6">
-                    <Link href="/admin/view_selections">
+                    <Link href="/canteen-control/view_selections">
                       <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium">
                         View Details
                       </button>
@@ -113,7 +113,7 @@ export default function AdminDashboard() {
                   <UtensilsCrossed className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-main-text mb-2">No Active Menu</h3>
                   <p className="text-sm text-muted-text">No active menu found</p>
-                  <Link href="/admin/manage_menu" className="mt-4 inline-block">
+                  <Link href="/canteen-control/manage_menu" className="mt-4 inline-block">
                     <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium">
                       Create Menu
                     </button>
@@ -131,7 +131,7 @@ export default function AdminDashboard() {
               <span className="text-sm text-muted-text">Quick access to admin functions</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Link href="/admin/manage_users" className="group">
+              <Link href="/canteen-control/manage_users" className="group">
                 <div className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-primary/30 hover:bg-red-50 transition-all hover:shadow-sm">
                   <div className="flex items-center">
                     <div className="bg-red-100 p-2 rounded-lg mr-4">
@@ -145,7 +145,7 @@ export default function AdminDashboard() {
                   <ChevronLeft className="w-5 h-5 text-muted-text rotate-180 group-hover:translate-x-1 transition-transform" />
                 </div>
               </Link>
-              <Link href="/admin/manage_menu" className="group">
+              <Link href="/canteen-control/manage_menu" className="group">
                 <div className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-primary/30 hover:bg-red-50 transition-all hover:shadow-sm">
                   <div className="flex items-center">
                     <div className="bg-red-100 p-2 rounded-lg mr-4">
@@ -159,7 +159,7 @@ export default function AdminDashboard() {
                   <ChevronLeft className="w-5 h-5 text-muted-text rotate-180 group-hover:translate-x-1 transition-transform" />
                 </div>
               </Link>
-              <Link href="/admin/view_selections" className="group">
+              <Link href="/canteen-control/view_selections" className="group">
                 <div className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-primary/30 hover:bg-red-50 transition-all hover:shadow-sm">
                   <div className="flex items-center">
                     <div className="bg-red-100 p-2 rounded-lg mr-4">
@@ -173,7 +173,7 @@ export default function AdminDashboard() {
                   <ChevronLeft className="w-5 h-5 text-muted-text rotate-180 group-hover:translate-x-1 transition-transform" />
                 </div>
               </Link>
-              <Link href="/admin/reports" className="group">
+              <Link href="/canteen-control/reports" className="group">
                 <div className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-primary/30 hover:bg-red-50 transition-all hover:shadow-sm">
                   <div className="flex items-center">
                     <div className="bg-red-100 p-2 rounded-lg mr-4">

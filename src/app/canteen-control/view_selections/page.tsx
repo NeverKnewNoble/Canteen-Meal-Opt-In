@@ -148,7 +148,7 @@ export default function ViewSelections() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navbar title="View Selections" step="Admin Screen 4/5" backHref="/admin" />
+      <Navbar title="View Selections" step="Admin Screen 4/5" backHref="/canteen-control" />
       
       <main className="px-8 py-6">
         <div className="max-w-6xl mx-auto">
