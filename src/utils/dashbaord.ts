@@ -17,7 +17,7 @@ const fallbackStats = (): DashboardStat[] => [
     change: '0%',
     icon: Users,
     color: 'blue',
-    href: '/admin/manage_users',
+    href: '/canteen-control/manage_users',
   },
   {
     title: 'Active Meals',
@@ -25,7 +25,7 @@ const fallbackStats = (): DashboardStat[] => [
     change: '0',
     icon: UtensilsCrossed,
     color: 'green',
-    href: '/admin/manage_menu',
+    href: '/canteen-control/manage_menu',
   },
   {
     title: "Today's Selections",
@@ -33,7 +33,7 @@ const fallbackStats = (): DashboardStat[] => [
     change: '0%',
     icon: Calendar,
     color: 'purple',
-    href: '/admin/view_selections',
+    href: '/canteen-control/view_selections',
   },
   {
     title: 'Participation Rate',
@@ -41,7 +41,7 @@ const fallbackStats = (): DashboardStat[] => [
     change: '0%',
     icon: TrendingUp,
     color: 'orange',
-    href: '/admin/reports',
+    href: '/canteen-control/reports',
   },
 ];
 
@@ -55,7 +55,7 @@ export const getDashboardStats = async (): Promise<DashboardStat[]> => {
         change: '+5%',
         icon: Users,
         color: 'blue',
-        href: '/admin/manage_users',
+        href: '/canteen-control/manage_users',
       },
       {
         title: 'Active Meals',
@@ -63,7 +63,7 @@ export const getDashboardStats = async (): Promise<DashboardStat[]> => {
         change: '+2',
         icon: UtensilsCrossed,
         color: 'green',
-        href: '/admin/manage_menu',
+        href: '/canteen-control/manage_menu',
       },
       {
         title: "Today's Selections",
@@ -71,7 +71,7 @@ export const getDashboardStats = async (): Promise<DashboardStat[]> => {
         change: '+8%',
         icon: Calendar,
         color: 'purple',
-        href: '/admin/view_selections',
+        href: '/canteen-control/view_selections',
       },
       {
         title: 'Participation Rate',
@@ -79,7 +79,7 @@ export const getDashboardStats = async (): Promise<DashboardStat[]> => {
         change: '+3%',
         icon: TrendingUp,
         color: 'orange',
-        href: '/admin/reports',
+        href: '/canteen-control/reports',
       },
     ];
   } catch (error) {
