@@ -24,7 +24,8 @@ export const createDepartment = async (departmentData: {
     return data;
   } catch (error) {
     console.error('Error in createDepartment:', error);
-    toast.error('Failed to create department');
+    const message = error instanceof Error ? error.message : 'Failed to create department';
+    toast.error(message);
     throw error;
   }
 };
@@ -60,7 +61,8 @@ export const deleteDepartment = async (departmentId: string): Promise<void> => {
     toast.success('Department deleted successfully');
   } catch (error) {
     console.error('Error in deleteDepartment:', error);
-    toast.error('Failed to delete department');
+    const message = error instanceof Error ? error.message : 'Failed to delete department';
+    toast.error(message);
     throw error;
   }
 };

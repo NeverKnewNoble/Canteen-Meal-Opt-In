@@ -37,6 +37,13 @@ export async function DELETE(_req: NextRequest, context: Ctx) {
     await repo.deleteDepartment(id);
     return NextResponse.json({ ok: true });
   } catch (e: unknown) {
+    const code = (e as { code?: string })?.code;
+    if (code === '23503') {
+      return NextResponse.json(
+        { error: 'Cannot delete: users are assigned to this department. Reassign or remove them first.' },
+        { status: 409 }
+      );
+    }
     const message = e instanceof Error ? e.message : 'Server error';
     return NextResponse.json({ error: message }, { status: 500 });
   }

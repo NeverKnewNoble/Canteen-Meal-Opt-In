@@ -104,22 +104,24 @@ export default function ManageUsers() {
   };
 
   const handleAddDepartment = async (departmentName: string) => {
-  try {
-    const newDepartment = await createDepartment({ name: departmentName });
-    setDepartments([...departments, newDepartment]);
-  } catch (error) {
-    console.error('Failed to add department:', error);
-  }
-};
+    try {
+      const newDepartment = await createDepartment({ name: departmentName });
+      setDepartments([...departments, newDepartment]);
+    } catch (error) {
+      console.error('Failed to add department:', error);
+      throw error;
+    }
+  };
 
-const handleDeleteDepartment = async (departmentId: string) => {
-  try {
-    await deleteDepartment(departmentId);
-    setDepartments(departments.filter(dept => dept.id !== departmentId));
-  } catch (error) {
-    console.error('Failed to delete department:', error);
-  }
-};
+  const handleDeleteDepartment = async (departmentId: string) => {
+    try {
+      await deleteDepartment(departmentId);
+      setDepartments(departments.filter(dept => dept.id !== departmentId));
+    } catch (error) {
+      console.error('Failed to delete department:', error);
+      throw error;
+    }
+  };
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
