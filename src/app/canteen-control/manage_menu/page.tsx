@@ -11,6 +11,7 @@ import EditMealModal from '@/components/EditMealModal';
 import { getAllMenus, createMenu, updateMenu, deleteMenu, getStatusColor, setTodaysSpecial } from '@/utils/menu';
 import { getAllMeals, createMeal, updateMeal, deleteMeal, getMealsByMenuId } from '@/utils/meals';
 import { toast } from '@/components/alert';
+import { confirm } from '@/components/ConfirmDialog';
 import type { Menu, MenuMeal, MenuFormData, MealFormData } from '@/types';
 
 export default function ManageMenu() {
@@ -148,22 +149,38 @@ export default function ManageMenu() {
   };
   
   const handleDeleteMeal = async (menuId: string, mealId: string) => {
+    const meal = meals.find((m) => m.id === mealId);
+    const confirmed = await confirm({
+      title: 'Delete meal?',
+      description: `"${meal?.name ?? 'This meal'}" and all selections for it will be permanently removed. This cannot be undone.`,
+      confirmLabel: 'Delete',
+    });
+    if (!confirmed) return;
+
     try {
       // Delete the meal
       await deleteMeal(mealId);
-      
+
       // Refresh data from database
       const refreshedMenus = await getAllMenus();
       const refreshedMeals = await getAllMeals();
-      
+
       setMenus(refreshedMenus);
       setMeals(refreshedMeals);
     } catch (error) {
       console.error('Failed to delete meal:', error);
     }
   };
-  
+
   const handleDeleteMenu = async (menuId: string) => {
+    const menu = menus.find((m) => m.id === menuId);
+    const confirmed = await confirm({
+      title: 'Delete menu?',
+      description: `"${menu?.name ?? 'This menu'}" along with all its meals and selections will be permanently removed. This cannot be undone.`,
+      confirmLabel: 'Delete',
+    });
+    if (!confirmed) return;
+
     try {
       await deleteMenu(menuId);
       setMenus(menus.filter(menu => menu.id !== menuId));

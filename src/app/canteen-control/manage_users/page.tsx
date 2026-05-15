@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Upload, Plus, Edit, Trash2, Users, Download } from 'lucide-react';
+import { Search, Upload, Plus, Edit, Trash2, Users, Download, Lock, Unlock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import AddUserModal from '@/components/AddUserModal';
@@ -11,6 +11,7 @@ import { getAllUsers, createUser, updateUser, deleteUser, searchUsers, getUsersB
 import { getAllDepartments, createDepartment, updateDepartment, deleteDepartment } from '@/utils/departments';
 import { downloadCSVTemplate } from '@/utils/bulkImport';
 import { toast } from '@/components/alert';
+import { confirm } from '@/components/ConfirmDialog';
 import type { User } from '@/types';
 import type { Department } from '@/types/department';
 
@@ -94,7 +95,25 @@ export default function ManageUsers() {
     }
   };
 
+  const handleToggleSelfOptIn = async (user: User) => {
+    const nextValue = !user.can_self_opt_in;
+    try {
+      const updated = await updateUser(user.id, { can_self_opt_in: nextValue });
+      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+    } catch (error) {
+      console.error('Failed to toggle self opt-in:', error);
+    }
+  };
+
   const handleDeleteUser = async (userId: string) => {
+    const user = users.find((u) => u.id === userId);
+    const confirmed = await confirm({
+      title: 'Delete user?',
+      description: `"${user?.name ?? 'This user'}" and all of their meal selections will be permanently removed. This cannot be undone.`,
+      confirmLabel: 'Delete',
+    });
+    if (!confirmed) return;
+
     try {
       await deleteUser(userId);
       setUsers(users.filter((user) => user.id !== userId));
@@ -263,6 +282,9 @@ export default function ManageUsers() {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-muted-text uppercase tracking-wider">
                     Department
                   </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-muted-text uppercase tracking-wider">
+                    Self Opt-In
+                  </th>
                   <th className="px-6 py-4 text-right text-xs font-semibold text-muted-text uppercase tracking-wider">
                     Actions
                   </th>
@@ -271,7 +293,7 @@ export default function ManageUsers() {
               <tbody className="bg-white divide-y divide-gray-100">
                 {loading ? (
                   <tr>
-                    <td colSpan={3} className="px-6 py-12 text-center">
+                    <td colSpan={4} className="px-6 py-12 text-center">
                       <div className="flex items-center justify-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                         <span className="ml-3 text-muted-text">Loading users...</span>
@@ -296,6 +318,32 @@ export default function ManageUsers() {
                           {getDepartmentName(user.department)}
                         </span>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSelfOptIn(user)}
+                          title={user.can_self_opt_in
+                            ? 'User can opt in for themselves. Click to disable.'
+                            : 'User cannot opt in for themselves. Click to allow.'}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                            user.can_self_opt_in
+                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                              : 'bg-red-100 text-primary hover:bg-red-200'
+                          }`}
+                        >
+                          {user.can_self_opt_in ? (
+                            <>
+                              <Unlock className="w-3 h-3" />
+                              Allowed
+                            </>
+                          ) : (
+                            <>
+                              <Lock className="w-3 h-3" />
+                              Blocked
+                            </>
+                          )}
+                        </button>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
                           onClick={() => openEditModal(user)}
@@ -314,7 +362,7 @@ export default function ManageUsers() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3} className="px-6 py-12 text-center">
+                    <td colSpan={4} className="px-6 py-12 text-center">
                       <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                       <p className="text-muted-text">No users found</p>
                     </td>
