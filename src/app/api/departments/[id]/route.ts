@@ -3,9 +3,16 @@ import * as repo from '@/lib/db/repos';
 
 type Ctx = { params: Promise<{ id: string }> };
 
+function isValidId(id: string): boolean {
+  return /^\d+$/.test(id);
+}
+
 export async function GET(_req: NextRequest, context: Ctx) {
   try {
     const { id } = await context.params;
+    if (!isValidId(id)) {
+      return NextResponse.json({ error: 'Invalid department id' }, { status: 400 });
+    }
     const row = await repo.getDepartmentById(id);
     if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(row);
@@ -18,6 +25,9 @@ export async function GET(_req: NextRequest, context: Ctx) {
 export async function PATCH(req: NextRequest, context: Ctx) {
   try {
     const { id } = await context.params;
+    if (!isValidId(id)) {
+      return NextResponse.json({ error: 'Invalid department id' }, { status: 400 });
+    }
     const body = await req.json();
     const name = body.name as string;
     if (!name?.trim()) {
@@ -34,6 +44,9 @@ export async function PATCH(req: NextRequest, context: Ctx) {
 export async function DELETE(_req: NextRequest, context: Ctx) {
   try {
     const { id } = await context.params;
+    if (!isValidId(id)) {
+      return NextResponse.json({ error: 'Invalid department id' }, { status: 400 });
+    }
     await repo.deleteDepartment(id);
     return NextResponse.json({ ok: true });
   } catch (e: unknown) {

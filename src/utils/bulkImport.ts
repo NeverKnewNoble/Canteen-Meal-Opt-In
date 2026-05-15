@@ -8,13 +8,26 @@ import { ParsedUserRow, ValidationResult, ImportResult } from '@/types/bulk_impo
  * Expects columns: Name, Department
  */
 export const parseCSV = (csvContent: string): ParsedUserRow[] => {
-  const lines = csvContent.split('\n').filter((line) => line.trim() !== '');
+  // Strip UTF-8 BOM that Excel prepends, then split on CR/LF.
+  const stripped = csvContent.replace(/^﻿/, '');
+  const lines = stripped.split(/\r?\n/);
 
-  if (lines.length < 2) {
+  // The template includes "#" comment/instruction lines; ignore them so a
+  // line like "# Available Departments: Marketing, Finance" doesn't get
+  // parsed as a real user row.
+  const isDataLine = (line: string) => {
+    const trimmed = line.trim();
+    return trimmed !== '' && !trimmed.startsWith('#');
+  };
+
+  const headerIdx = lines.findIndex(isDataLine);
+  if (headerIdx === -1) {
     throw new Error('CSV file must have a header row and at least one data row');
   }
 
-  const header = lines[0].split(',').map((h) => h.trim().toLowerCase().replace(/"/g, ''));
+  const header = lines[headerIdx]
+    .split(',')
+    .map((h) => h.trim().toLowerCase().replace(/"/g, ''));
   const nameIndex = header.findIndex((h) => h === 'name');
   const departmentIndex = header.findIndex((h) => h === 'department');
 
@@ -27,11 +40,10 @@ export const parseCSV = (csvContent: string): ParsedUserRow[] => {
 
   const users: ParsedUserRow[] = [];
 
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
+  for (let i = headerIdx + 1; i < lines.length; i++) {
+    if (!isDataLine(lines[i])) continue;
 
-    const values = parseCSVLine(line);
+    const values = parseCSVLine(lines[i].trim());
 
     const name = values[nameIndex]?.trim().replace(/"/g, '') || '';
     const department = values[departmentIndex]?.trim().replace(/"/g, '') || '';
@@ -43,6 +55,10 @@ export const parseCSV = (csvContent: string): ParsedUserRow[] => {
         rowNumber: i + 1,
       });
     }
+  }
+
+  if (users.length === 0) {
+    throw new Error('CSV file must have a header row and at least one data row');
   }
 
   return users;
@@ -115,13 +131,18 @@ export const bulkCreateUsers = async (
     errors: [],
   };
 
+  const isValidId = (v: unknown): v is string =>
+    typeof v === 'string' && /^[1-9][0-9]*$/.test(v);
+
   const departmentMap = new Map<string, string>();
-  departments.forEach((d) => departmentMap.set(d.name.toLowerCase(), d.id));
+  departments.forEach((d) => {
+    if (isValidId(d.id)) departmentMap.set(d.name.toLowerCase(), d.id);
+  });
 
   const rows: { name: string; departmentId: string; rowNumber: number }[] = [];
   for (const user of users) {
     const departmentId = departmentMap.get(user.department.toLowerCase());
-    if (!departmentId) {
+    if (!isValidId(departmentId)) {
       result.failed++;
       result.errors.push(
         `Row ${user.rowNumber}: Department "${user.department}" not found`

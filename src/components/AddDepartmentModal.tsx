@@ -46,6 +46,7 @@ export default function AddDepartmentModal({ isOpen, onClose, onAddDepartment, o
 
   const handleDeleteDepartment = async (departmentId: string) => {
     if (deletingId) return;
+    if (!departmentId) return;
     const dept = departments.find((d) => d.id === departmentId);
     const confirmed = window.confirm(
       `Delete department "${dept?.name ?? ''}"? This cannot be undone.`
@@ -109,23 +110,25 @@ export default function AddDepartmentModal({ isOpen, onClose, onAddDepartment, o
             <div>
               <h3 className="text-sm font-medium text-main-text mb-3">Existing Departments</h3>
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                {departments.map((department) => (
-                  <div
-                    key={department.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
-                  >
-                    <span className="text-sm text-main-text">{department.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteDepartment(department.id)}
-                      disabled={deletingId === department.id}
-                      className="text-muted-text hover:text-primary hover:bg-red-100 p-1.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Delete department"
+                {departments
+                  .filter((department) => department.id != null && department.id !== 'null')
+                  .map((department) => (
+                    <div
+                      key={department.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+                      <span className="text-sm text-main-text">{department.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteDepartment(department.id)}
+                        disabled={deletingId === department.id}
+                        className="text-muted-text hover:text-primary hover:bg-red-100 p-1.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Delete department"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
               </div>
             </div>
           )}

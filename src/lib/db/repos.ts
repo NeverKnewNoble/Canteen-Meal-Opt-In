@@ -20,9 +20,21 @@ function toDateStr(v: unknown): string {
   return String(v);
 }
 
+// Bigint ids come back from pg as strings. NULL means the row's identity
+// column never got a value — surface that loudly instead of producing the
+// literal string "null", which silently propagates into later inserts.
+function requireId(v: unknown, table: string, column = 'id'): string {
+  if (v === null || v === undefined || v === '') {
+    throw new Error(
+      `${table}.${column} is NULL — run docs/migrations/001-bigint-identity-for-app-inserts.sql so identity columns auto-generate.`
+    );
+  }
+  return String(v);
+}
+
 function mapDepartment(r: Record<string, unknown>): Department {
   return {
-    id: String(r.id),
+    id: requireId(r.id, 'departments'),
     name: String(r.name),
     created_at: toIso(r.created_at),
   };
@@ -30,18 +42,18 @@ function mapDepartment(r: Record<string, unknown>): Department {
 
 function mapUser(r: Record<string, unknown>): User {
   return {
-    id: String(r.id),
+    id: requireId(r.id, 'users'),
     name: String(r.name),
-    department: String(r.department),
+    department: requireId(r.department, 'users', 'department'),
   };
 }
 
 function mapMeal(r: Record<string, unknown>): Meal {
   return {
-    id: String(r.id),
+    id: requireId(r.id, 'meals'),
     name: String(r.name),
     description: String(r.description ?? ''),
-    menu_id: String(r.menu_id),
+    menu_id: requireId(r.menu_id, 'meals', 'menu_id'),
     created_at: r.created_at ? toIso(r.created_at) : undefined,
   };
 }
@@ -51,7 +63,7 @@ function mapMenuRow(
   meals?: MenuMeal[]
 ): Menu {
   return {
-    id: String(r.id),
+    id: requireId(r.id, 'menu'),
     name: String(r.name),
     date: toDateStr(r.date),
     deadline: toIso(r.deadline),
@@ -64,9 +76,9 @@ function mapMenuRow(
 
 function mapSelection(r: Record<string, unknown>): Selection {
   return {
-    id: String(r.id),
-    user_id: String(r.user_id),
-    meal_id: String(r.meal_id),
+    id: requireId(r.id, 'selections'),
+    user_id: requireId(r.user_id, 'selections', 'user_id'),
+    meal_id: requireId(r.meal_id, 'selections', 'meal_id'),
     opted_in: Boolean(r.opted_in),
     created_at: r.created_at ? toIso(r.created_at) : undefined,
   };
@@ -223,10 +235,23 @@ export async function bulkInsertUsers(
   rowsInput: { name: string; departmentId: string; rowNumber: number }[]
 ): Promise<{ rowNumber: number; message: string }[]> {
   const errors: { rowNumber: number; message: string }[] = [];
+  const isValidId = (v: unknown): v is string =>
+    typeof v === 'string' && /^[1-9][0-9]*$/.test(v);
   for (const row of rowsInput) {
+    if (!row.name || !row.name.trim()) {
+      errors.push({ rowNumber: row.rowNumber, message: 'Name is required' });
+      continue;
+    }
+    if (!isValidId(row.departmentId)) {
+      errors.push({
+        rowNumber: row.rowNumber,
+        message: `Invalid department id "${row.departmentId}"`,
+      });
+      continue;
+    }
     try {
       await pool.query(
-        `INSERT INTO users (name, department, created_at) VALUES ($1, $2, now())`,
+        `INSERT INTO users (name, department, created_at) VALUES ($1, $2::bigint, now())`,
         [row.name, row.departmentId]
       );
     } catch (e: unknown) {
