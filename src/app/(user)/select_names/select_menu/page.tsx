@@ -211,7 +211,7 @@ export default function SelectMenu() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navbar title="Select Menu" step="Step 2 of 3" backHref="/select_names" />
+      <Navbar title="Select Menu" step="Step 2 of 3" />
 
       <main className="flex justify-center px-4 py-8">
         <div className="max-w-2xl w-full space-y-6">

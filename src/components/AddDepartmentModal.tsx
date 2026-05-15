@@ -7,21 +7,35 @@ import type { Department } from '@/types/department';
 interface AddDepartmentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddDepartment: (departmentName: string) => void;
-  onDeleteDepartment: (departmentId: string) => void;
+  onAddDepartment: (departmentName: string) => Promise<void>;
+  onDeleteDepartment: (departmentId: string) => Promise<void>;
   departments: Department[];
 }
 
 export default function AddDepartmentModal({ isOpen, onClose, onAddDepartment, onDeleteDepartment, departments }: AddDepartmentModalProps) {
   const [name, setName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const isDuplicate = departments.some(
+    (dept) => dept.name.toLowerCase() === name.trim().toLowerCase()
+  );
+  const isValid = name.trim().length > 0 && !isDuplicate;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (isValid) {
-      onAddDepartment(name.trim());
+    if (!isValid || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      await onAddDepartment(name.trim());
       setName('');
       onClose();
+    } catch {
+      // Error toast already surfaced by parent/utils; keep modal open so user can retry.
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -30,13 +44,22 @@ export default function AddDepartmentModal({ isOpen, onClose, onAddDepartment, o
     onClose();
   };
 
-  const isDuplicate = departments.some(
-    (dept) => dept.name.toLowerCase() === name.trim().toLowerCase()
-  );
-  const isValid = name.trim().length > 0 && !isDuplicate;
-
   const handleDeleteDepartment = async (departmentId: string) => {
-    onDeleteDepartment(departmentId);
+    if (deletingId) return;
+    const dept = departments.find((d) => d.id === departmentId);
+    const confirmed = window.confirm(
+      `Delete department "${dept?.name ?? ''}"? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setDeletingId(departmentId);
+    try {
+      await onDeleteDepartment(departmentId);
+    } catch {
+      // Error toast already surfaced by parent/utils.
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   if (!isOpen) return null;
@@ -95,7 +118,8 @@ export default function AddDepartmentModal({ isOpen, onClose, onAddDepartment, o
                     <button
                       type="button"
                       onClick={() => handleDeleteDepartment(department.id)}
-                      className="text-muted-text hover:text-primary hover:bg-red-100 p-1.5 rounded-lg transition-colors"
+                      disabled={deletingId === department.id}
+                      className="text-muted-text hover:text-primary hover:bg-red-100 p-1.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Delete department"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -117,10 +141,10 @@ export default function AddDepartmentModal({ isOpen, onClose, onAddDepartment, o
             </button>
             <button
               type="submit"
-              disabled={!isValid}
+              disabled={!isValid || isSubmitting}
               className="px-5 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
-              Add Department
+              {isSubmitting ? 'Adding...' : 'Add Department'}
             </button>
           </div>
         </form>
