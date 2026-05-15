@@ -22,6 +22,8 @@ export async function PATCH(req: NextRequest, context: Ctx) {
     const row = await repo.updateUser(id, {
       name: body.name as string | undefined,
       department: body.department as string | undefined,
+      can_self_opt_in:
+        typeof body.can_self_opt_in === 'boolean' ? body.can_self_opt_in : undefined,
     });
     return NextResponse.json(row);
   } catch (e: unknown) {

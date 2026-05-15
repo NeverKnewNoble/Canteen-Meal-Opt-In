@@ -3,6 +3,7 @@
 import { X, Building2, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { Department } from '@/types/department';
+import { confirm } from '@/components/ConfirmDialog';
 
 interface AddDepartmentModalProps {
   isOpen: boolean;
@@ -48,9 +49,11 @@ export default function AddDepartmentModal({ isOpen, onClose, onAddDepartment, o
     if (deletingId) return;
     if (!departmentId) return;
     const dept = departments.find((d) => d.id === departmentId);
-    const confirmed = window.confirm(
-      `Delete department "${dept?.name ?? ''}"? This cannot be undone.`
-    );
+    const confirmed = await confirm({
+      title: 'Delete department?',
+      description: `"${dept?.name ?? 'This department'}" will be permanently removed, along with every user assigned to it and all of their meal selections. This cannot be undone.`,
+      confirmLabel: 'Delete',
+    });
     if (!confirmed) return;
 
     setDeletingId(departmentId);

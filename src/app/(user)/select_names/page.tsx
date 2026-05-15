@@ -1,9 +1,10 @@
 'use client';
 
-import { Search, UserPlus, ArrowRight, X, Plus } from 'lucide-react';
+import { Search, UserPlus, ArrowRight, X, Plus, Lock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getAllUsers } from '@/utils/users';
 import { getAllDepartments } from '@/utils/departments';
+import { toast } from '@/components/alert';
 import type { Department } from '@/types/department';
 import type { User } from '@/types';
 import Link from 'next/link';
@@ -88,37 +89,60 @@ export default function SelectNames() {
           {/* Suggested Results */}
           {searchQuery.length >= 2 && filteredUsers.length > 0 && (
             <div className="mt-3 border border-gray-200 rounded-lg shadow-sm divide-y divide-gray-100 overflow-hidden">
-              {filteredUsers.slice(0, 5).map((user) => (
-                <div
-                  key={user.id}
-                  onClick={() => {
-                    if (!isSelected(user.id)) {
-                      setSelectedNames([user]);
-                      setSearchQuery('');
-                    }
-                  }}
-                  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
-                    isSelected(user.id)
-                      ? 'bg-primary/5'
-                      : 'hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-sm font-semibold text-primary">
-                        {user.name.split(' ').map(n => n[0]).join('')}
-                      </span>
+              {filteredUsers.slice(0, 5).map((user) => {
+                const blocked = !user.can_self_opt_in;
+                return (
+                  <div
+                    key={user.id}
+                    onClick={() => {
+                      if (blocked) {
+                        toast.error(
+                          `${user.name} must be opted in by an admin.`
+                        );
+                        return;
+                      }
+                      if (!isSelected(user.id)) {
+                        setSelectedNames([user]);
+                        setSearchQuery('');
+                      }
+                    }}
+                    className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
+                      isSelected(user.id)
+                        ? 'bg-primary/5'
+                        : blocked
+                        ? 'hover:bg-red-50'
+                        : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        blocked ? 'bg-gray-100' : 'bg-primary/10'
+                      }`}>
+                        <span className={`text-sm font-semibold ${
+                          blocked ? 'text-muted-text' : 'text-primary'
+                        }`}>
+                          {user.name.split(' ').map(n => n[0]).join('')}
+                        </span>
+                      </div>
+                      <div>
+                        <p className={`font-medium ${
+                          blocked ? 'text-muted-text' : 'text-main-text'
+                        }`}>{user.name}</p>
+                        <p className="text-sm text-muted-text">
+                          {blocked
+                            ? 'Must be opted in by admin'
+                            : getDepartmentName(user.department)}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-main-text">{user.name}</p>
-                      <p className="text-sm text-muted-text">{getDepartmentName(user.department)}</p>
-                    </div>
+                    {blocked ? (
+                      <Lock className="w-5 h-5 text-muted-text" />
+                    ) : !isSelected(user.id) ? (
+                      <Plus className="w-5 h-5 text-muted-text" />
+                    ) : null}
                   </div>
-                  {!isSelected(user.id) && (
-                    <Plus className="w-5 h-5 text-muted-text" />
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

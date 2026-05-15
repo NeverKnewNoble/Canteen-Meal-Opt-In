@@ -1,5 +1,5 @@
 import 'server-only';
-import { pool } from './pool';
+import { pool, withTransaction } from './pool';
 import type { Menu, MenuMeal, MenuFormData, MenuStatus } from '@/types/menu';
 import type { Meal, MealFormData } from '@/types/meal';
 import type { User } from '@/types/user';
@@ -45,6 +45,7 @@ function mapUser(r: Record<string, unknown>): User {
     id: requireId(r.id, 'users'),
     name: String(r.name),
     department: requireId(r.department, 'users', 'department'),
+    can_self_opt_in: r.can_self_opt_in === undefined ? true : Boolean(r.can_self_opt_in),
   };
 }
 
@@ -113,7 +114,15 @@ export async function updateDepartment(
 }
 
 export async function deleteDepartment(id: string): Promise<void> {
-  await pool.query(`DELETE FROM departments WHERE id = $1`, [id]);
+  await withTransaction(async (client) => {
+    await client.query(
+      `DELETE FROM selections
+         WHERE user_id IN (SELECT id FROM users WHERE department = $1)`,
+      [id]
+    );
+    await client.query(`DELETE FROM users WHERE department = $1`, [id]);
+    await client.query(`DELETE FROM departments WHERE id = $1`, [id]);
+  });
 }
 
 export async function getDepartmentById(
@@ -156,7 +165,7 @@ export async function checkDepartmentExists(
 
 export async function listUsers(): Promise<User[]> {
   const { rows } = await pool.query(
-    `SELECT id, name, department, created_at FROM users ORDER BY created_at DESC`
+    `SELECT id, name, department, can_self_opt_in, created_at FROM users ORDER BY created_at DESC`
   );
   return rows.map((r) => mapUser(r as Record<string, unknown>));
 }
@@ -167,7 +176,7 @@ export async function createUser(
 ): Promise<User> {
   const { rows } = await pool.query(
     `INSERT INTO users (name, department, created_at) VALUES ($1, $2, now())
-     RETURNING id, name, department, created_at`,
+     RETURNING id, name, department, can_self_opt_in, created_at`,
     [name, department]
   );
   return mapUser(rows[0] as Record<string, unknown>);
@@ -175,7 +184,7 @@ export async function createUser(
 
 export async function updateUser(
   id: string,
-  patch: { name?: string; department?: string }
+  patch: { name?: string; department?: string; can_self_opt_in?: boolean }
 ): Promise<User> {
   const sets: string[] = [];
   const vals: unknown[] = [];
@@ -188,6 +197,10 @@ export async function updateUser(
     sets.push(`department = $${i++}`);
     vals.push(patch.department);
   }
+  if (patch.can_self_opt_in !== undefined) {
+    sets.push(`can_self_opt_in = $${i++}`);
+    vals.push(patch.can_self_opt_in);
+  }
   if (sets.length === 0) {
     const u = await getUserById(id);
     if (!u) throw new Error('User not found');
@@ -195,19 +208,22 @@ export async function updateUser(
   }
   vals.push(id);
   const { rows } = await pool.query(
-    `UPDATE users SET ${sets.join(', ')} WHERE id = $${i} RETURNING id, name, department, created_at`,
+    `UPDATE users SET ${sets.join(', ')} WHERE id = $${i} RETURNING id, name, department, can_self_opt_in, created_at`,
     vals
   );
   return mapUser(rows[0] as Record<string, unknown>);
 }
 
 export async function deleteUser(id: string): Promise<void> {
-  await pool.query(`DELETE FROM users WHERE id = $1`, [id]);
+  await withTransaction(async (client) => {
+    await client.query(`DELETE FROM selections WHERE user_id = $1`, [id]);
+    await client.query(`DELETE FROM users WHERE id = $1`, [id]);
+  });
 }
 
 export async function getUserById(id: string): Promise<User | null> {
   const { rows } = await pool.query(
-    `SELECT id, name, department, created_at FROM users WHERE id = $1`,
+    `SELECT id, name, department, can_self_opt_in, created_at FROM users WHERE id = $1`,
     [id]
   );
   return rows[0] ? mapUser(rows[0] as Record<string, unknown>) : null;
@@ -217,7 +233,7 @@ export async function listUsersByDepartment(
   departmentId: string
 ): Promise<User[]> {
   const { rows } = await pool.query(
-    `SELECT id, name, department, created_at FROM users WHERE department = $1 ORDER BY created_at DESC`,
+    `SELECT id, name, department, can_self_opt_in, created_at FROM users WHERE department = $1 ORDER BY created_at DESC`,
     [departmentId]
   );
   return rows.map((r) => mapUser(r as Record<string, unknown>));
@@ -225,7 +241,7 @@ export async function listUsersByDepartment(
 
 export async function searchUsersByName(q: string): Promise<User[]> {
   const { rows } = await pool.query(
-    `SELECT id, name, department, created_at FROM users WHERE name ILIKE $1 ORDER BY created_at DESC`,
+    `SELECT id, name, department, can_self_opt_in, created_at FROM users WHERE name ILIKE $1 ORDER BY created_at DESC`,
     [`%${q}%`]
   );
   return rows.map((r) => mapUser(r as Record<string, unknown>));
@@ -341,7 +357,15 @@ export async function updateMenuRow(
 }
 
 export async function deleteMenuRow(menuId: string): Promise<void> {
-  await pool.query(`DELETE FROM menu WHERE id = $1`, [menuId]);
+  await withTransaction(async (client) => {
+    await client.query(
+      `DELETE FROM selections
+         WHERE meal_id IN (SELECT id FROM meals WHERE menu_id = $1)`,
+      [menuId]
+    );
+    await client.query(`DELETE FROM meals WHERE menu_id = $1`, [menuId]);
+    await client.query(`DELETE FROM menu WHERE id = $1`, [menuId]);
+  });
 }
 
 export async function getMenuById(menuId: string): Promise<Menu | null> {
@@ -507,7 +531,14 @@ export async function updateMealRow(
 }
 
 export async function deleteMealRow(mealId: string): Promise<void> {
-  await pool.query(`DELETE FROM meals WHERE id = $1`, [mealId]);
+  await withTransaction(async (client) => {
+    await client.query(`DELETE FROM selections WHERE meal_id = $1`, [mealId]);
+    await client.query(`DELETE FROM meals WHERE id = $1`, [mealId]);
+    await client.query(
+      `UPDATE menu SET todays_special = NULL WHERE todays_special = $1`,
+      [mealId]
+    );
+  });
 }
 
 export async function getMealById(mealId: string): Promise<Meal | null> {

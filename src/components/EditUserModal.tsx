@@ -7,7 +7,7 @@ import type { User } from '@/types';
 interface EditUserModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onEditUser: (userData: User) => void;
+  onEditUser: (userData: { name: string; department: string }) => void;
   user: User | null;
   departments: string[];
 }
@@ -28,7 +28,6 @@ export default function EditUserModal({ isOpen, onClose, onEditUser, user, depar
 
     if (name.trim() && department && user) {
       onEditUser({
-        id: user.id,
         name: name.trim(),
         department,
       });
