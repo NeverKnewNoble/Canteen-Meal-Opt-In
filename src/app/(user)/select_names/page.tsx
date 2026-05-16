@@ -1,12 +1,19 @@
 'use client';
 
-import { Search, UserPlus, ArrowRight, X, Plus, Lock } from 'lucide-react';
+import { Search, UserPlus, ArrowRight, X, Plus, Lock, ShieldCheck } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getAllUsers } from '@/utils/users';
 import { getAllDepartments } from '@/utils/departments';
+import { getAllMenus } from '@/utils/menu';
+import { getAllMeals } from '@/utils/meals';
+import { getAllSelections } from '@/utils/selections';
 import { toast } from '@/components/alert';
+import BulkOptInModal from '@/components/BulkOptInModal';
 import type { Department } from '@/types/department';
 import type { User } from '@/types';
+import type { Menu } from '@/types/menu';
+import type { Meal } from '@/types/meal';
+import type { Selection } from '@/types/selection';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
@@ -15,18 +22,28 @@ export default function SelectNames() {
   const [selectedNames, setSelectedNames] = useState<User[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Map<string, string>>(new Map());
+  const [menus, setMenus] = useState<Menu[]>([]);
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [selections, setSelections] = useState<Selection[]>([]);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   // Fetch all users and departments on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [users, deptList] = await Promise.all([
+        const [users, deptList, menusData, mealsData, selectionsData] = await Promise.all([
           getAllUsers(),
-          getAllDepartments()
+          getAllDepartments(),
+          getAllMenus(),
+          getAllMeals(),
+          getAllSelections(),
         ]);
-        
+
         setAllUsers(users);
-        
+        setMenus(menusData);
+        setMeals(mealsData);
+        setSelections(selectionsData);
+
         // Create department lookup map
         const deptMap = new Map<string, string>();
         deptList.forEach(dept => {
@@ -39,6 +56,18 @@ export default function SelectNames() {
     };
     fetchData();
   }, []);
+
+  const refreshSelections = async () => {
+    try {
+      const updated = await getAllSelections();
+      setSelections(updated);
+    } catch (error) {
+      console.error('Failed to refresh selections:', error);
+    }
+  };
+
+  const selectedUser = selectedNames[0];
+  const canBulkOptIn = Boolean(selectedUser?.can_bulk_opt_in);
 
   // Helper function to get department name
   const getDepartmentName = (departmentId: string | null | undefined) => {
@@ -184,6 +213,30 @@ export default function SelectNames() {
           )}
         </div>
 
+        {canBulkOptIn && (
+          <div className="border-2 border-primary/20 bg-red-50/40 rounded-lg p-4 flex items-start gap-3">
+            <div className="bg-red-100 p-2 rounded-lg shrink-0">
+              <ShieldCheck className="w-5 h-5 text-primary" />
+            </div>
+            <div className="grow">
+              <p className="text-sm font-semibold text-main-text">
+                Bulk Opt-In role assigned
+              </p>
+              <p className="text-sm text-muted-text mb-3">
+                You can opt in multiple staff at once for a meal.
+              </p>
+              <button
+                type="button"
+                onClick={() => setBulkOpen(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium"
+              >
+                <UserPlus className="w-4 h-4" />
+                Open Bulk Opt-In
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Next Button */}
         <Link href="/select_names/select_menu" className="block">
           <button
@@ -200,6 +253,20 @@ export default function SelectNames() {
         </Link>
         </div>
       </main>
+
+      <BulkOptInModal
+        isOpen={bulkOpen}
+        onClose={() => setBulkOpen(false)}
+        onSuccess={refreshSelections}
+        menus={menus}
+        meals={meals}
+        users={allUsers}
+        departments={departments}
+        existingSelections={selections.map((s) => ({
+          user_id: s.user_id,
+          meal_id: s.meal_id,
+        }))}
+      />
     </div>
   );
 }
