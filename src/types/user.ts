@@ -5,6 +5,7 @@ export interface User {
   name: string;
   department: string;
   can_self_opt_in: boolean;
+  can_bulk_opt_in: boolean;
 }
 
 export interface UserSelectionData {

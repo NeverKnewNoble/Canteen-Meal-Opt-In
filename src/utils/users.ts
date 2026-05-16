@@ -35,7 +35,12 @@ export const createUser = async (userData: {
 
 export const updateUser = async (
   userId: string,
-  userData: { name?: string; department?: string; can_self_opt_in?: boolean }
+  userData: {
+    name?: string;
+    department?: string;
+    can_self_opt_in?: boolean;
+    can_bulk_opt_in?: boolean;
+  }
 ): Promise<User> => {
   try {
     const data = await apiFetch<User>(`/api/users/${userId}`, {

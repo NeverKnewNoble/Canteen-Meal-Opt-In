@@ -46,6 +46,7 @@ function mapUser(r: Record<string, unknown>): User {
     name: String(r.name),
     department: requireId(r.department, 'users', 'department'),
     can_self_opt_in: r.can_self_opt_in === undefined ? true : Boolean(r.can_self_opt_in),
+    can_bulk_opt_in: r.can_bulk_opt_in === undefined ? false : Boolean(r.can_bulk_opt_in),
   };
 }
 
@@ -165,7 +166,7 @@ export async function checkDepartmentExists(
 
 export async function listUsers(): Promise<User[]> {
   const { rows } = await pool.query(
-    `SELECT id, name, department, can_self_opt_in, created_at FROM users ORDER BY created_at DESC`
+    `SELECT id, name, department, can_self_opt_in, can_bulk_opt_in, created_at FROM users ORDER BY created_at DESC`
   );
   return rows.map((r) => mapUser(r as Record<string, unknown>));
 }
@@ -176,7 +177,7 @@ export async function createUser(
 ): Promise<User> {
   const { rows } = await pool.query(
     `INSERT INTO users (name, department, created_at) VALUES ($1, $2, now())
-     RETURNING id, name, department, can_self_opt_in, created_at`,
+     RETURNING id, name, department, can_self_opt_in, can_bulk_opt_in, created_at`,
     [name, department]
   );
   return mapUser(rows[0] as Record<string, unknown>);
@@ -184,7 +185,12 @@ export async function createUser(
 
 export async function updateUser(
   id: string,
-  patch: { name?: string; department?: string; can_self_opt_in?: boolean }
+  patch: {
+    name?: string;
+    department?: string;
+    can_self_opt_in?: boolean;
+    can_bulk_opt_in?: boolean;
+  }
 ): Promise<User> {
   const sets: string[] = [];
   const vals: unknown[] = [];
@@ -201,6 +207,10 @@ export async function updateUser(
     sets.push(`can_self_opt_in = $${i++}`);
     vals.push(patch.can_self_opt_in);
   }
+  if (patch.can_bulk_opt_in !== undefined) {
+    sets.push(`can_bulk_opt_in = $${i++}`);
+    vals.push(patch.can_bulk_opt_in);
+  }
   if (sets.length === 0) {
     const u = await getUserById(id);
     if (!u) throw new Error('User not found');
@@ -208,7 +218,7 @@ export async function updateUser(
   }
   vals.push(id);
   const { rows } = await pool.query(
-    `UPDATE users SET ${sets.join(', ')} WHERE id = $${i} RETURNING id, name, department, can_self_opt_in, created_at`,
+    `UPDATE users SET ${sets.join(', ')} WHERE id = $${i} RETURNING id, name, department, can_self_opt_in, can_bulk_opt_in, created_at`,
     vals
   );
   return mapUser(rows[0] as Record<string, unknown>);
@@ -223,7 +233,7 @@ export async function deleteUser(id: string): Promise<void> {
 
 export async function getUserById(id: string): Promise<User | null> {
   const { rows } = await pool.query(
-    `SELECT id, name, department, can_self_opt_in, created_at FROM users WHERE id = $1`,
+    `SELECT id, name, department, can_self_opt_in, can_bulk_opt_in, created_at FROM users WHERE id = $1`,
     [id]
   );
   return rows[0] ? mapUser(rows[0] as Record<string, unknown>) : null;
@@ -233,7 +243,7 @@ export async function listUsersByDepartment(
   departmentId: string
 ): Promise<User[]> {
   const { rows } = await pool.query(
-    `SELECT id, name, department, can_self_opt_in, created_at FROM users WHERE department = $1 ORDER BY created_at DESC`,
+    `SELECT id, name, department, can_self_opt_in, can_bulk_opt_in, created_at FROM users WHERE department = $1 ORDER BY created_at DESC`,
     [departmentId]
   );
   return rows.map((r) => mapUser(r as Record<string, unknown>));
@@ -241,7 +251,7 @@ export async function listUsersByDepartment(
 
 export async function searchUsersByName(q: string): Promise<User[]> {
   const { rows } = await pool.query(
-    `SELECT id, name, department, can_self_opt_in, created_at FROM users WHERE name ILIKE $1 ORDER BY created_at DESC`,
+    `SELECT id, name, department, can_self_opt_in, can_bulk_opt_in, created_at FROM users WHERE name ILIKE $1 ORDER BY created_at DESC`,
     [`%${q}%`]
   );
   return rows.map((r) => mapUser(r as Record<string, unknown>));
