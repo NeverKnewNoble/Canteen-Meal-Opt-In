@@ -3,13 +3,14 @@
 import { X, Edit } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { User } from '@/types';
+import type { Department } from '@/types/department';
 
 interface EditUserModalProps {
   isOpen: boolean;
   onClose: () => void;
   onEditUser: (userData: { name: string; department: string }) => void;
   user: User | null;
-  departments: string[];
+  departments: Department[];
 }
 
 export default function EditUserModal({ isOpen, onClose, onEditUser, user, departments }: EditUserModalProps) {
@@ -19,9 +20,10 @@ export default function EditUserModal({ isOpen, onClose, onEditUser, user, depar
   useEffect(() => {
     if (isOpen && user) {
       setName(user.name);
-      setDepartment(user.department);
+      const currentName = departments.find((d) => d.id === user.department)?.name ?? '';
+      setDepartment(currentName);
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, departments]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,8 +93,8 @@ export default function EditUserModal({ isOpen, onClose, onEditUser, user, depar
               required
             >
               {departments.map((dept) => (
-                <option key={dept} value={dept}>
-                  {dept}
+                <option key={dept.id} value={dept.name}>
+                  {dept.name}
                 </option>
               ))}
             </select>
