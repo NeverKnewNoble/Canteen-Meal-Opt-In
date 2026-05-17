@@ -439,7 +439,7 @@ export default function ManageUsers() {
           setSelectedUser(null);
         }}
         onEditUser={handleEditUser}
-        departments={departments.map(dept => dept.name)}
+        departments={departments}
         user={selectedUser}
       />
 
