@@ -111,12 +111,12 @@ export default function TomorrowsMenu() {
             </div>
 
             {/* Date & Time Info */}
-            <div className="bg-red-50 px-6 py-3 flex items-center justify-center gap-6 border-b border-red-100">
+            <div className="bg-red-50 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-6 gap-y-1 border-b border-red-100">
               <div className="flex items-center text-sm text-main-text">
                 <CalendarDays className="w-4 h-4 mr-2 text-primary" />
                 <span>{formatDate(tomorrowMenu.date)}</span>
               </div>
-              <div className="w-px h-4 bg-red-200" />
+              <div className="hidden sm:block w-px h-4 bg-red-200" />
               <div className="flex items-center text-sm text-main-text">
                 <Clock className="w-4 h-4 mr-2 text-warning" />
                 <span>Closes {formatDeadline(tomorrowMenu.deadline)}</span>

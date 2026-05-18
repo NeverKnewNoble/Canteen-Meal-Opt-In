@@ -143,7 +143,7 @@ export default function BulkOptInModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col border-2 border-gray-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <div className="bg-red-100 p-2 rounded-lg">
               <Users className="w-5 h-5 text-primary" />
@@ -165,7 +165,7 @@ export default function BulkOptInModal({
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-5 overflow-y-auto">
+        <div className="p-4 sm:p-6 space-y-5 overflow-y-auto">
           {/* Menu + Meal pickers */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -315,7 +315,7 @@ export default function BulkOptInModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200">
+        <div className="flex items-center justify-end gap-3 px-4 sm:px-6 py-4 border-t border-gray-200">
           <button
             type="button"
             onClick={onClose}

@@ -221,17 +221,17 @@ export default function ManageMenu() {
     <div className="min-h-screen bg-white">
       <Navbar title="Manage Menu" step="Admin" backHref="/canteen-control" />
       
-      <main className="px-8 py-6">
+      <main className="px-4 sm:px-8 py-6">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-main-text">Manage Menu</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-main-text">Manage Menu</h1>
               <p className="text-muted-text mt-1">Create menus and manage meals</p>
             </div>
             <button
               onClick={() => setIsAddMenuModalOpen(true)}
-              className="bg-primary cursor-pointer text-white px-6 py-3 rounded-lg flex items-center hover:bg-primary-hover transition-colors font-medium"
+              className="bg-primary cursor-pointer text-white px-6 py-3 rounded-lg flex items-center justify-center hover:bg-primary-hover transition-colors font-medium shrink-0"
             >
               <Plus className="w-5 h-5 mr-2" />
               Create Menu
@@ -239,9 +239,9 @@ export default function ManageMenu() {
           </div>
 
           {/* Search and Filter */}
-          <div className="mb-6 p-5 border-2 border-gray-200 rounded-xl bg-white">
-            <div className="flex flex-wrap gap-4">
-              <div className="relative flex-1 min-w-64">
+          <div className="mb-6 p-4 sm:p-5 border-2 border-gray-200 rounded-xl bg-white">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4">
+              <div className="relative flex-1 sm:min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-text" />
                 <input
                   type="text"
@@ -254,7 +254,7 @@ export default function ManageMenu() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-3 border-2 border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-main-text transition-all min-w-45"
+                className="w-full sm:w-auto px-4 py-3 border-2 border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-main-text transition-all sm:min-w-[180px]"
               >
                 <option value="All">All Status</option>
                 <option value="active">Active</option>
@@ -272,22 +272,22 @@ export default function ManageMenu() {
               return (
                 <div key={menu.id} className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden hover:border-primary/30 transition-all">
                   {/* Menu Header */}
-                  <div className="p-6 border-b border-gray-200">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
+                  <div className="p-4 sm:p-6 border-b border-gray-200">
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
                           <button
                             onClick={() => toggleCardCollapse(menu.id)}
-                            className="p-1 rounded-lg cursor-pointer text-muted-text hover:text-primary hover:bg-red-100 transition-colors mr-2"
+                            className="p-1 rounded-lg cursor-pointer text-muted-text hover:text-primary hover:bg-red-100 transition-colors shrink-0"
                           >
                             <ChevronDown className={`w-4 h-4 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
                           </button>
-                          <h3 className="text-xl font-bold text-main-text">{menu.name}</h3>
+                          <h3 className="text-lg sm:text-xl font-bold text-main-text break-words">{menu.name}</h3>
                           <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(menu.status)}`}>
                             {menu.status.charAt(0).toUpperCase() + menu.status.slice(1)}
                           </span>
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-text">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-text">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
                             <span>{menu.date}</span>
@@ -298,7 +298,7 @@ export default function ManageMenu() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                         <button
                           onClick={() => openEditMenuModal(menu)}
                           className="p-2 rounded-lg cursor-pointer text-muted-text hover:text-primary hover:bg-red-100 transition-colors"
@@ -313,23 +313,23 @@ export default function ManageMenu() {
                         </button>
                       </div>
                     </div>
-                    
+
                   </div>
 
                   {/* Meals Section - Collapsible */}
                   {!isCollapsed && (
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-4">
+                    <div className="p-4 sm:p-6">
+                      <div className="flex items-center justify-between mb-4 gap-3">
                         <h4 className="font-semibold text-main-text">Meals ({getMealsForMenu(menu.id)?.length || 0})</h4>
                         <button
                           onClick={() => openAddMealModal(menu)}
-                          className="px-3 py-1.5 cursor-pointer bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium flex items-center gap-1"
+                          className="px-3 py-1.5 cursor-pointer bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors text-sm font-medium flex items-center gap-1 shrink-0"
                         >
                           <Plus className="w-3 h-3" />
                           Add Meal
                         </button>
                       </div>
-                      
+
                       {/* Meals List */}
                       <div className="space-y-3">
                         {getMealsForMenu(menu.id) && getMealsForMenu(menu.id).length > 0 ? (
@@ -337,26 +337,26 @@ export default function ManageMenu() {
                             <div key={meal.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
                               <div className="flex">
                                 {/* Meal Icon Section */}
-                                <div className="bg-linear-to-br from-red-50 to-red-100 p-4 flex items-center justify-center">
-                                  <HandPlatter className="w-8 h-8 text-primary" />
+                                <div className="bg-linear-to-br from-red-50 to-red-100 p-3 sm:p-4 flex items-center justify-center shrink-0">
+                                  <HandPlatter className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                                 </div>
-                                
+
                                 {/* Meal Content Section */}
-                                <div className="flex-1 p-4">
-                                  <div className="flex items-start justify-between mb-3">
-                                    <div>
-                                      <h5 className="text-lg font-semibold text-main-text mb-1">{meal.name}</h5>
+                                <div className="flex-1 p-3 sm:p-4 min-w-0">
+                                  <div className="flex items-start justify-between gap-2 mb-3">
+                                    <div className="min-w-0 flex-1">
+                                      <h5 className="text-base sm:text-lg font-semibold text-main-text mb-1 break-words">{meal.name}</h5>
                                       {menu.todays_special === meal.id && (
                                         <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium shadow-sm">
                                           <Star className="w-3 h-3 fill-current" />
                                           Today's Special
                                         </span>
                                       )}
-                                      <p className="text-sm text-muted-text leading-relaxed">{meal.description}</p>
+                                      <p className="text-sm text-muted-text leading-relaxed break-words">{meal.description}</p>
                                     </div>
-                                    
+
                                     {/* Action Buttons */}
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                                       <button
                                         onClick={() => openEditMealModal(menu, meal)}
                                         className="p-2 rounded-lg text-muted-text hover:text-primary hover:bg-gray-100 transition-colors"
