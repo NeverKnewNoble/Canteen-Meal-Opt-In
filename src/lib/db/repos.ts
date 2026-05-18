@@ -594,6 +594,9 @@ export async function createSelectionRow(
   const { rows } = await pool.query(
     `INSERT INTO selections (user_id, meal_id, opted_in, created_at, updated_at)
      VALUES ($1, $2, $3, now(), now())
+     ON CONFLICT (user_id, meal_id) DO UPDATE
+       SET opted_in = EXCLUDED.opted_in,
+           updated_at = now()
      RETURNING id, user_id, meal_id, opted_in, created_at`,
     [data.user_id, data.meal_id, data.opted_in]
   );
@@ -676,6 +679,7 @@ export async function bulkCreateSelectionsSkipExisting(
     `INSERT INTO selections (user_id, meal_id, opted_in, created_at, updated_at)
      SELECT u::bigint, $1::bigint, $2, now(), now()
      FROM unnest($3::bigint[]) AS u
+     ON CONFLICT (user_id, meal_id) DO NOTHING
      RETURNING id, user_id, meal_id, opted_in, created_at`,
     [mealId, optedIn, toInsert]
   );

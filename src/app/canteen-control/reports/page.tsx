@@ -453,11 +453,11 @@ export default function Reports() {
       <div className="min-h-screen bg-white">
         <Navbar title="Reports & Export" step="Admin Screen 5/5" backHref="/canteen-control" />
 
-        <main className="px-8 py-6">
+        <main className="px-4 sm:px-8 py-6">
           <div className="max-w-6xl mx-auto">
             {/* Header */}
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-main-text">Reports & Export</h1>
+            <div className="mb-6 sm:mb-8">
+              <h1 className="text-2xl sm:text-3xl font-bold text-main-text">Reports & Export</h1>
               <p className="text-muted-text mt-1">Select a menu to generate a report</p>
             </div>
 
@@ -473,12 +473,12 @@ export default function Reports() {
                 <p className="text-muted-text">Create a menu first to generate reports</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {menus.map((menu) => (
                   <button
                     key={menu.id}
                     onClick={() => handleSelectMenu(menu)}
-                    className="bg-white rounded-xl border-2 border-gray-200 p-6 text-left hover:border-primary/50 hover:shadow-md transition-all group cursor-pointer"
+                    className="bg-white rounded-xl border-2 border-gray-200 p-4 sm:p-6 text-left hover:border-primary/50 hover:shadow-md transition-all group cursor-pointer"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
@@ -516,7 +516,7 @@ export default function Reports() {
     <div className="min-h-screen bg-white">
       <Navbar title="Reports & Export" step="Admin Screen 5/5" backHref="/canteen-control" />
 
-      <main className="px-8 py-6">
+      <main className="px-4 sm:px-8 py-6">
         <div className="max-w-6xl mx-auto">
           {/* Back Button & Header */}
           <div className="mb-6">
@@ -528,9 +528,9 @@ export default function Reports() {
               Back to Menu Selection
             </button>
             <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-main-text">{selectedMenu.name}</h1>
-                <div className="flex items-center gap-4 mt-2 text-sm text-muted-text">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl sm:text-3xl font-bold text-main-text break-words">{selectedMenu.name}</h1>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-sm text-muted-text">
                   <div className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
                     <span>{selectedMenu.date}</span>
@@ -548,30 +548,30 @@ export default function Reports() {
           </div>
 
           {/* Export Options */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-6 mb-6">
+          <div className="bg-white rounded-xl border-2 border-gray-200 p-4 sm:p-6 mb-6">
             <h2 className="text-lg font-semibold text-main-text mb-4">Export Options</h2>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <button
                 onClick={handlePrint}
-                className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-primary/30 hover:bg-gray-50 transition-all text-center cursor-pointer"
+                className="bg-white border-2 border-gray-200 rounded-xl p-4 sm:p-6 hover:border-primary/30 hover:bg-gray-50 transition-all text-center cursor-pointer"
               >
-                <Printer className="w-8 h-8 mx-auto mb-3 text-main-text" />
+                <Printer className="w-7 h-7 sm:w-8 sm:h-8 mx-auto mb-2 sm:mb-3 text-main-text" />
                 <h3 className="font-semibold text-main-text mb-1">Print</h3>
                 <p className="text-sm text-muted-text">Direct to printer</p>
               </button>
               <button
                 onClick={handleDownloadPDF}
-                className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-primary/30 hover:bg-gray-50 transition-all text-center cursor-pointer"
+                className="bg-white border-2 border-gray-200 rounded-xl p-4 sm:p-6 hover:border-primary/30 hover:bg-gray-50 transition-all text-center cursor-pointer"
               >
-                <Download className="w-8 h-8 mx-auto mb-3 text-primary" />
+                <Download className="w-7 h-7 sm:w-8 sm:h-8 mx-auto mb-2 sm:mb-3 text-primary" />
                 <h3 className="font-semibold text-main-text mb-1">PDF</h3>
                 <p className="text-sm text-muted-text">Portable document</p>
               </button>
               <button
                 onClick={handleDownloadExcel}
-                className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-primary/30 hover:bg-gray-50 transition-all text-center cursor-pointer"
+                className="bg-white border-2 border-gray-200 rounded-xl p-4 sm:p-6 hover:border-primary/30 hover:bg-gray-50 transition-all text-center cursor-pointer"
               >
-                <FileSpreadsheet className="w-8 h-8 mx-auto mb-3 text-success" />
+                <FileSpreadsheet className="w-7 h-7 sm:w-8 sm:h-8 mx-auto mb-2 sm:mb-3 text-success" />
                 <h3 className="font-semibold text-main-text mb-1">Excel</h3>
                 <p className="text-sm text-muted-text">Spreadsheet format</p>
               </button>
@@ -579,8 +579,8 @@ export default function Reports() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="bg-white p-5 rounded-xl border-2 border-gray-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div className="bg-white p-4 sm:p-5 rounded-xl border-2 border-gray-200">
               <div className="flex items-center">
                 <div className="bg-red-100 p-3 rounded-lg mr-4">
                   <Users className="w-6 h-6 text-primary" />
@@ -622,26 +622,25 @@ export default function Reports() {
               {selectionsByMeal.map(({ meal, selections: mealSelections }) => (
                 <div key={meal.id} className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
                   {/* Meal Header */}
-                  <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-main-text">{meal.name}</h3>
-                        <p className="text-sm text-muted-text">{meal.description}</p>
+                  <div className="bg-gray-50 px-4 sm:px-6 py-4 border-b border-gray-200">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="text-lg font-semibold text-main-text break-words">{meal.name}</h3>
+                        <p className="text-sm text-muted-text break-words">{meal.description}</p>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            {mealSelections.length} Opted In
-                          </span>
-                        </div>
+                      <div className="flex items-center gap-4 shrink-0">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          {mealSelections.length} Opted In
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   {/* Selections Table */}
                   {mealSelections.length > 0 ? (
-                    <table className="w-full">
+                    <div className="overflow-x-auto">
+                    <table className="w-full min-w-[480px]">
                       <thead className="bg-gray-50 border-b border-gray-200">
                         <tr>
                           <th className="px-6 py-3 text-left text-xs font-medium text-muted-text uppercase tracking-wider">
@@ -671,6 +670,7 @@ export default function Reports() {
                         ))}
                       </tbody>
                     </table>
+                    </div>
                   ) : (
                     <div className="px-6 py-8 text-center text-muted-text">
                       No selections for this meal

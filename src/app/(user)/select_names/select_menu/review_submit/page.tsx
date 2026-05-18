@@ -161,12 +161,12 @@ export default function ReviewSubmit() {
             <Sparkles className="w-4 h-4 text-red-200" />
           </div>
           <h1 className="text-xl font-bold text-white mb-3">Confirm Your Choices</h1>
-          <div className="flex items-center justify-center gap-4 text-sm text-red-100">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-red-100">
             <div className="flex items-center gap-1.5">
               <CalendarDays className="w-4 h-4" />
               <span>{menu ? new Date(menu.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) : 'Tomorrow'}</span>
             </div>
-            <div className="w-px h-4 bg-red-300/50" />
+            <div className="hidden sm:block w-px h-4 bg-red-300/50" />
             <div className="flex items-center gap-1.5">
               <Clock className="w-4 h-4" />
               <span>Closes {menu ? new Date(menu.deadline).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '4:00 PM'}</span>

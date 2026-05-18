@@ -212,15 +212,15 @@ export default function ManageUsers() {
     <div className="min-h-screen bg-white">
       <Navbar title="Manage Users" step="Admin" backHref="/canteen-control" />
 
-      <main className="px-8 py-6">
+      <main className="px-4 sm:px-8 py-6">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6 sm:mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-main-text">Manage Users</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-main-text">Manage Users</h1>
               <p className="text-muted-text mt-1">Add, edit, or remove staff members</p>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               <button
                 onClick={() => setIsAssignRoleModalOpen(true)}
                 className="bg-gray-100 text-main-text px-4 py-2.5 rounded-lg flex items-center hover:bg-gray-200 transition-colors font-medium border-2 border-gray-200"
@@ -246,9 +246,9 @@ export default function ManageUsers() {
           </div>
 
           {/* Search and Filter */}
-          <div className="mb-6 p-5 border-2 border-gray-200 rounded-xl bg-white">
-            <div className="flex flex-wrap gap-4">
-              <div className="relative flex-1 min-w-50">
+          <div className="mb-6 p-4 sm:p-5 border-2 border-gray-200 rounded-xl bg-white">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4">
+              <div className="relative flex-1 sm:min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-text" />
                 <input
                   type="text"
@@ -307,8 +307,8 @@ export default function ManageUsers() {
           </div>
 
           {/* Users Table */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
-            <table className="w-full">
+          <div className="bg-white rounded-xl border-2 border-gray-200 overflow-x-auto">
+            <table className="w-full min-w-[720px]">
               <thead className="bg-gray-50 border-b-2 border-gray-200">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-muted-text uppercase tracking-wider">
