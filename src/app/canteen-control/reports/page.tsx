@@ -6,7 +6,6 @@ import Navbar from '@/components/Navbar';
 import { getAllMenus, getStatusColor } from '@/utils/menu';
 import { getSelectionsByMenuId, SelectionWithDetails } from '@/utils/selections';
 import { getMealsByMenuId } from '@/utils/meals';
-import { getAllDepartments } from '@/utils/departments';
 import type { Menu, MenuMeal } from '@/types';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -19,7 +18,6 @@ export default function Reports() {
   const [meals, setMeals] = useState<MenuMeal[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingReport, setLoadingReport] = useState(false);
-  const [departments, setDepartments] = useState<Map<string, string>>(new Map());
 
   // Fetch menus on mount
   useEffect(() => {
@@ -27,14 +25,6 @@ export default function Reports() {
       try {
         const fetchedMenus = await getAllMenus();
         setMenus(fetchedMenus);
-        
-        // Also fetch departments for lookup
-        const deptList = await getAllDepartments();
-        const deptMap = new Map<string, string>();
-        deptList.forEach(dept => {
-          deptMap.set(dept.id, dept.name);
-        });
-        setDepartments(deptMap);
       } catch (error) {
         console.error('Failed to fetch menus:', error);
       } finally {
@@ -44,12 +34,6 @@ export default function Reports() {
 
     fetchMenus();
   }, []);
-
-  // Helper function to get department name
-  const getDepartmentName = (departmentId: string | null | undefined) => {
-    if (!departmentId) return 'No Department';
-    return departments.get(departmentId) || 'Unknown Department';
-  };
 
   // Print function
   const handlePrint = () => {
@@ -119,7 +103,7 @@ export default function Reports() {
                       <tr>
                         <td>${i + 1}</td>
                         <td>${s.userName}</td>
-                        <td>${getDepartmentName(s.department)}</td>
+                        <td>${s.department || 'No Department'}</td>
                       </tr>
                     `).join('')}
                   </tbody>
@@ -196,7 +180,7 @@ export default function Reports() {
           body: mealSelections.map((s, i) => [
             (i + 1).toString(),
             s.userName,
-            getDepartmentName(s.department)
+            s.department || 'No Department'
           ]),
           theme: 'grid',
           headStyles: { fillColor: [249, 250, 251], textColor: [107, 114, 128], fontSize: 9 },
@@ -274,7 +258,7 @@ export default function Reports() {
           fullReportData.push([
             i + 1,
             s.userName,
-            getDepartmentName(s.department)
+            s.department || 'No Department'
           ]);
         });
       } else {
@@ -314,7 +298,7 @@ export default function Reports() {
       allSelectionsData.push([
         rowNum,
         s.userName,
-        getDepartmentName(s.department),
+        s.department || 'No Department',
         s.mealName
       ]);
       rowNum++;
@@ -342,7 +326,7 @@ export default function Reports() {
       yesOnlyData.push([
         yesRowNum,
         s.userName,
-        getDepartmentName(s.department),
+        s.department || 'No Department',
         s.mealName
       ]);
       yesRowNum++;
@@ -369,7 +353,7 @@ export default function Reports() {
       noOnlyData.push([
         noRowNum,
         s.userName,
-        getDepartmentName(s.department),
+        s.department || 'No Department',
         s.mealName
       ]);
       noRowNum++;
@@ -404,7 +388,7 @@ export default function Reports() {
           mealData.push([
             i + 1,
             s.userName,
-            getDepartmentName(s.department)
+            s.department || 'No Department'
           ]);
         });
       } else {
@@ -681,7 +665,7 @@ export default function Reports() {
                               <div className="text-sm font-medium text-main-text">{selection.userName}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-muted-text">{getDepartmentName(selection.department)}</div>
+                              <div className="text-sm text-muted-text">{selection.department || 'No Department'}</div>
                             </td>
                           </tr>
                         ))}
