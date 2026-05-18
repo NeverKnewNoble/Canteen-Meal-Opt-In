@@ -19,7 +19,7 @@ import type { User } from '@/types';
 
 export default function ViewSelections() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [menuFilter, setMenuFilter] = useState('All Menus');
+  const [menuFilter, setMenuFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selections, setSelections] = useState<Selection[]>([]);
   const [departments, setDepartments] = useState<Map<string, string>>(new Map());
@@ -133,26 +133,17 @@ export default function ViewSelections() {
     return 'Unknown Date';
   };
 
-  // Get unique menu names for filter
-  const uniqueMenuNames = ['All Menus', ...menus.map(m => m.name)];
-
-  // Create menu name to ID map
-  const menuNameToIdMap = new Map<string, string>();
-  menus.forEach(menu => {
-    menuNameToIdMap.set(menu.name, menu.id);
-  });
-
   // Filter selections
   const filteredSelections = selections.filter(selection => {
     const userName = getUserName(selection.user_id);
     const userDept = getUserDepartment(selection.user_id);
-    
-    const matchesSearch = searchQuery === '' || 
+
+    const matchesSearch = searchQuery === '' ||
       userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       userDept.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesMenu = menuFilter === 'All Menus' || 
-      meals.find(m => m.id === selection.meal_id)?.menu_id === menuNameToIdMap.get(menuFilter);
+
+    const matchesMenu = menuFilter === 'All' ||
+      meals.find(m => m.id === selection.meal_id)?.menu_id === menuFilter;
     
     const matchesStatus = statusFilter === 'All' || 
       (statusFilter === 'Yes' && selection.opted_in) || 
@@ -249,8 +240,11 @@ export default function ViewSelections() {
                 onChange={(e) => setMenuFilter(e.target.value)}
                 className="w-full sm:w-auto px-4 text-main-text py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               >
-                {uniqueMenuNames.map(menuName => (
-                  <option key={menuName} value={menuName}>{menuName}</option>
+                <option value="All">All Menus</option>
+                {menus.map(menu => (
+                  <option key={menu.id} value={menu.id}>
+                    {menu.name} — {menu.date}
+                  </option>
                 ))}
               </select>
               <select
